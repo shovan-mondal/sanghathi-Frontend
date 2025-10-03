@@ -30,7 +30,7 @@ This platform provides comprehensive tools for educators, mentors, and mentees a
 ### 1. Clone the repository
 
 ````bash
-git clone https://github.com/dreadwing5/cmrit-mentoring-tool-frontend.git
+git clone https://github.com/Sanghathi/sanghathi-Frontend.git
 cd cmrit-mentoring-tool-frontend
 
 ````
