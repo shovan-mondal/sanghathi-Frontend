@@ -47,6 +47,7 @@ import { initGA, trackPageView } from "./ga";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword   from "./pages/ResetPassword";
 import FeedbackForm from "./pages/Feedback/feedback";
+import ComplaintForm from "./pages/Complain/Complaint";
 
 // TODO : Need to remove routing logic from app component
 function App() {
@@ -348,7 +349,14 @@ function App() {
                     }
                   />
                 </Route>
-                
+                <Route
+                  path="/Complain"
+                  element={
+                    <ProtectedRouteWrapper>
+                      <LazyLoadWrapper component={ComplaintForm} />
+                    </ProtectedRouteWrapper>
+                  }
+                />
               </Routes>
             </main>
           </div>
