@@ -49,6 +49,12 @@ export default function PrevAcademic() {
   const [isDataFetched, setIsDataFetched] = useState(false);
   const [selectedSubjects, setSelectedSubjects] = useState([]);
 
+  // Check if the current user is faculty
+  const isFaculty = user?.roleName === "faculty";
+  
+  // Fields should be editable only if user is not faculty
+  const isEditable = !isFaculty;
+
   const methods = useForm({
     defaultValues: DEFAULT_VALUES,
   });
@@ -156,6 +162,13 @@ export default function PrevAcademic() {
 
   return (
     <div>
+      {isFaculty && (
+        <Box sx={{ mb: 2, p: 2, bgcolor: 'warning.light', borderRadius: 1 }}>
+          <Typography variant="body2" color="warning.dark">
+            You are viewing this student profile in read-only mode. Only students can edit their own profiles.
+          </Typography>
+        </Box>
+      )}
       <FormProvider methods={methods} onSubmit={handleSubmit(onSubmit)}>
         <Grid container spacing={3}>
           <Grid item xs={12} md={12}>
@@ -176,9 +189,30 @@ export default function PrevAcademic() {
                   },
                 }}
               >
-                <RHFTextField name="sslc.school" label="School" />
-                <RHFTextField name="sslc.percentage" label="GPA/ % " />
-                <RHFSelect name="sslc.board" label="Board">
+                <RHFTextField 
+                  name="sslc.school" 
+                  label="School" 
+                  disabled={!isEditable}
+                  InputProps={{
+                    readOnly: !isEditable,
+                  }}
+                />
+                <RHFTextField 
+                  name="sslc.percentage" 
+                  label="GPA/ % " 
+                  disabled={!isEditable}
+                  InputProps={{
+                    readOnly: !isEditable,
+                  }}
+                />
+                <RHFSelect 
+                  name="sslc.board" 
+                  label="Board"
+                  disabled={!isEditable}
+                  InputProps={{
+                    readOnly: !isEditable,
+                  }}
+                >
                   <option value="" />
                   {BOARDS.map((option) => (
                     <option key={option} value={option}>
@@ -186,8 +220,22 @@ export default function PrevAcademic() {
                     </option>
                   ))}
                 </RHFSelect>
-                <RHFTextField name="sslc.yearOfPassing" label="Year of Passing" />
-                <RHFTextField name="sslc.schoolAddress" label="School Address" />
+                <RHFTextField 
+                  name="sslc.yearOfPassing" 
+                  label="Year of Passing" 
+                  disabled={!isEditable}
+                  InputProps={{
+                    readOnly: !isEditable,
+                  }}
+                />
+                <RHFTextField 
+                  name="sslc.schoolAddress" 
+                  label="School Address" 
+                  disabled={!isEditable}
+                  InputProps={{
+                    readOnly: !isEditable,
+                  }}
+                />
               </Box>
 
               <Typography variant="h6" sx={{ mt: 4 }}>PUC / Class XII</Typography>
@@ -203,9 +251,30 @@ export default function PrevAcademic() {
                   },
                 }}
               >
-                <RHFTextField name="puc.school" label="School" />
-                <RHFTextField name="puc.percentage" label="GPA/ % " />
-                <RHFSelect name="puc.board" label="Board">
+                <RHFTextField 
+                  name="puc.school" 
+                  label="School" 
+                  disabled={!isEditable}
+                  InputProps={{
+                    readOnly: !isEditable,
+                  }}
+                />
+                <RHFTextField 
+                  name="puc.percentage" 
+                  label="GPA/ % " 
+                  disabled={!isEditable}
+                  InputProps={{
+                    readOnly: !isEditable,
+                  }}
+                />
+                <RHFSelect 
+                  name="puc.board" 
+                  label="Board"
+                  disabled={!isEditable}
+                  InputProps={{
+                    readOnly: !isEditable,
+                  }}
+                >
                   <option value="" />
                   {BOARDS.map((option) => (
                     <option key={option} value={option}>
@@ -213,7 +282,14 @@ export default function PrevAcademic() {
                     </option>
                   ))}
                 </RHFSelect>
-                <RHFTextField name="puc.yearOfPassing" label="Year of Passing" />
+                <RHFTextField 
+                  name="puc.yearOfPassing" 
+                  label="Year of Passing" 
+                  disabled={!isEditable}
+                  InputProps={{
+                    readOnly: !isEditable,
+                  }}
+                />
 
                 <FormControl component="fieldset" sx={{ gridColumn: "span 2" }}>
                   <FormLabel component="legend">Subjects</FormLabel>
@@ -226,6 +302,7 @@ export default function PrevAcademic() {
                           <Checkbox
                             checked={selectedSubjects.includes(subject)}
                             onChange={(e) => handleSubjectChange(subject, e.target.checked)}
+                            disabled={!isEditable}
                           />
                         }
                         label={subject}
@@ -235,7 +312,14 @@ export default function PrevAcademic() {
                   </FormGroup>
                 </FormControl>
 
-                <RHFTextField name="puc.schoolAddress" label="School Address" />
+                <RHFTextField 
+                  name="puc.schoolAddress" 
+                  label="School Address" 
+                  disabled={!isEditable}
+                  InputProps={{
+                    readOnly: !isEditable,
+                  }}
+                />
               </Box>
 
               <Typography variant="h6" sx={{ mt: 4 }}>Lateral Entry/Diploma</Typography>
@@ -251,10 +335,38 @@ export default function PrevAcademic() {
                   },
                 }}
               >
-                <RHFTextField name="diploma.college" label="College" />
-                <RHFTextField name="diploma.branch" label="Branch" />
-                <RHFTextField name="diploma.percentage" label="GPA/ % " />
-                <RHFSelect name="diploma.board" label="Board">
+                <RHFTextField 
+                  name="diploma.college" 
+                  label="College" 
+                  disabled={!isEditable}
+                  InputProps={{
+                    readOnly: !isEditable,
+                  }}
+                />
+                <RHFTextField 
+                  name="diploma.branch" 
+                  label="Branch" 
+                  disabled={!isEditable}
+                  InputProps={{
+                    readOnly: !isEditable,
+                  }}
+                />
+                <RHFTextField 
+                  name="diploma.percentage" 
+                  label="GPA/ % " 
+                  disabled={!isEditable}
+                  InputProps={{
+                    readOnly: !isEditable,
+                  }}
+                />
+                <RHFSelect 
+                  name="diploma.board" 
+                  label="Board"
+                  disabled={!isEditable}
+                  InputProps={{
+                    readOnly: !isEditable,
+                  }}
+                >
                   <option value="" />
                   {BOARDS.map((option) => (
                     <option key={option} value={option}>
@@ -262,18 +374,34 @@ export default function PrevAcademic() {
                     </option>
                   ))}
                 </RHFSelect>
-                <RHFTextField name="diploma.yearOfPassing" label="Year of Passing" />
-                <RHFTextField name="diploma.collegeAddress" label="College Address" />
+                <RHFTextField 
+                  name="diploma.yearOfPassing" 
+                  label="Year of Passing" 
+                  disabled={!isEditable}
+                  InputProps={{
+                    readOnly: !isEditable,
+                  }}
+                />
+                <RHFTextField 
+                  name="diploma.collegeAddress" 
+                  label="College Address" 
+                  disabled={!isEditable}
+                  InputProps={{
+                    readOnly: !isEditable,
+                  }}
+                />
               </Box>
 
               <Stack spacing={3} alignItems="flex-end" sx={{ mt: 3 }}>
-                <LoadingButton
-                  type="submit"
-                  variant="contained"
-                  loading={isSubmitting}
-                >
-                  Save Changes
-                </LoadingButton>
+                {isEditable && (
+                  <LoadingButton
+                    type="submit"
+                    variant="contained"
+                    loading={isSubmitting}
+                  >
+                    Save Changes
+                  </LoadingButton>
+                )}
               </Stack>
             </Card>
           </Grid>

@@ -51,6 +51,12 @@ export default function ParentsDetails() {
   const menteeId = searchParams.get('menteeId');
   const [isDataFetched, setIsDataFetched] = useState(false);
 
+  // Check if the current user is faculty
+  const isFaculty = user?.roleName === "faculty";
+  
+  // Fields should be editable only if user is not faculty
+  const isEditable = !isFaculty;
+
   const methods = useForm({
     defaultValues: DEFAULT_VALUES,
   });
@@ -159,6 +165,13 @@ export default function ParentsDetails() {
 
   return (
     <div>
+      {isFaculty && (
+        <Box sx={{ mb: 2, p: 2, bgcolor: 'warning.light', borderRadius: 1 }}>
+          <Typography variant="body2" color="warning.dark">
+            You are viewing this student profile in read-only mode. Only students can edit their own profiles.
+          </Typography>
+        </Box>
+      )}
       <FormProvider methods={methods} onSubmit={handleSubmit(onSubmit)}>
         <Grid container spacing={2}>
           <Grid item xs={12} md={12}>
@@ -181,6 +194,10 @@ export default function ParentsDetails() {
                         label="Father's First Name"
                         fullWidth
                         required
+                        disabled={!isEditable}
+                        InputProps={{
+                          readOnly: !isEditable,
+                        }}
                       />
                     </Grid>
                     <Grid item xs={12} md={4}>
@@ -188,6 +205,10 @@ export default function ParentsDetails() {
                         name="fatherMiddleName"
                         label="Father's Middle Name"
                         fullWidth
+                        disabled={!isEditable}
+                        InputProps={{
+                          readOnly: !isEditable,
+                        }}
                       />
                     </Grid>
                     <Grid item xs={12} md={4}>
@@ -195,6 +216,10 @@ export default function ParentsDetails() {
                         name="fatherLastName"
                         label="Father's Last Name"
                         fullWidth
+                        disabled={!isEditable}
+                        InputProps={{
+                          readOnly: !isEditable,
+                        }}
                       />
                     </Grid>
                     <Grid item xs={12} md={4}>
@@ -203,6 +228,10 @@ export default function ParentsDetails() {
                         label="Mother's First Name"
                         fullWidth
                         required
+                        disabled={!isEditable}
+                        InputProps={{
+                          readOnly: !isEditable,
+                        }}
                       />
                     </Grid>
                     <Grid item xs={12} md={4}>
@@ -210,6 +239,10 @@ export default function ParentsDetails() {
                         name="motherMiddleName"
                         label="Mother's Middle Name"
                         fullWidth
+                        disabled={!isEditable}
+                        InputProps={{
+                          readOnly: !isEditable,
+                        }}
                       />
                     </Grid>
                     <Grid item xs={12} md={4}>
@@ -217,6 +250,10 @@ export default function ParentsDetails() {
                         name="motherLastName"
                         label="Mother's Last Name"
                         fullWidth
+                        disabled={!isEditable}
+                        InputProps={{
+                          readOnly: !isEditable,
+                        }}
                       />
                     </Grid>
                   </Grid>
@@ -236,32 +273,56 @@ export default function ParentsDetails() {
                       label="Father's Occupation"
                       fullWidth
                       required
+                      disabled={!isEditable}
+                      InputProps={{
+                        readOnly: !isEditable,
+                      }}
                     />
                     <RHFTextField
                       name="fatherOrganization"
                       label="Father's Organization"
                       fullWidth
+                      disabled={!isEditable}
+                      InputProps={{
+                        readOnly: !isEditable,
+                      }}
                     />
                     <RHFTextField
                       name="fatherDesignation"
                       label="Father's Designation"
                       fullWidth
+                      disabled={!isEditable}
+                      InputProps={{
+                        readOnly: !isEditable,
+                      }}
                     />
                     <RHFTextField
                       name="fatherOfficePhone"
                       label="Father's Office Phone No."
                       fullWidth
                       required
+                      disabled={!isEditable}
+                      InputProps={{
+                        readOnly: !isEditable,
+                      }}
                     />
                     <RHFTextField
                       name="fatherOfficeAddress"
                       label="Father's Office Address"
                       fullWidth
+                      disabled={!isEditable}
+                      InputProps={{
+                        readOnly: !isEditable,
+                      }}
                     />
                     <RHFTextField
                       name="fatherAnnualIncome"
                       label="Father's Annual Income"
                       fullWidth
+                      disabled={!isEditable}
+                      InputProps={{
+                        readOnly: !isEditable,
+                      }}
                     />
                   </Stack>
                 </Card>
@@ -275,32 +336,56 @@ export default function ParentsDetails() {
                       label="Mother's Occupation"
                       fullWidth
                       required
+                      disabled={!isEditable}
+                      InputProps={{
+                        readOnly: !isEditable,
+                      }}
                     />
                     <RHFTextField
                       name="motherOrganization"
                       label="Mother's Organization"
                       fullWidth
+                      disabled={!isEditable}
+                      InputProps={{
+                        readOnly: !isEditable,
+                      }}
                     />
                     <RHFTextField
                       name="motherDesignation"
                       label="Mother's Designation"
                       fullWidth
+                      disabled={!isEditable}
+                      InputProps={{
+                        readOnly: !isEditable,
+                      }}
                     />
                     <RHFTextField
                       name="motherOfficePhone"
                       label="Mother's Phone No."
                       fullWidth
                       required
+                      disabled={!isEditable}
+                      InputProps={{
+                        readOnly: !isEditable,
+                      }}
                     />
                     <RHFTextField
                       name="motherOfficeAddress"
                       label="Mother's Office Address"
                       fullWidth
+                      disabled={!isEditable}
+                      InputProps={{
+                        readOnly: !isEditable,
+                      }}
                     />
                     <RHFTextField
                       name="motherAnnualIncome"
                       label="Mother's Annual Income"
                       fullWidth
+                      disabled={!isEditable}
+                      InputProps={{
+                        readOnly: !isEditable,
+                      }}
                     />
                   </Stack>
                 </Card>
@@ -309,13 +394,15 @@ export default function ParentsDetails() {
                 <Card sx={{p:3}}>
                   <Stack spacing={3} alignItems="flex-end" >
                     <Box display="flex" gap={1}>
-                      <LoadingButton
-                        type="submit"
-                        variant="contained"
-                        loading={isSubmitting}
-                      >
-                        Save
-                      </LoadingButton>
+                      {isEditable && (
+                        <LoadingButton
+                          type="submit"
+                          variant="contained"
+                          loading={isSubmitting}
+                        >
+                          Save
+                        </LoadingButton>
+                      )}
                     </Box>
                   </Stack>
                 </Card>

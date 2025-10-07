@@ -28,7 +28,8 @@ import {
   Badge,
   Divider,
   Card,
-  AvatarGroup
+  AvatarGroup,
+  Pagination
 } from "@mui/material";
 import { 
   Search as SearchIcon, 
@@ -93,6 +94,9 @@ const Report = () => {
   const [selectedCategory, setSelectedCategory] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("Closed");
   const [showFilters, setShowFilters] = useState(false);
+  const [hideSummaryMessages, setHideSummaryMessages] = useState(false);
+  const [page, setPage] = useState(1);
+  const [itemsPerPage] = useState(50); // Keep 50 items per page
   const { enqueueSnackbar } = useSnackbar();
 
   // Get the color based on the current theme mode
@@ -148,6 +152,13 @@ const Report = () => {
     
     // Only filter out threads that are explicitly "open" or "in progress" AND have no topic/category
     if ((normalizedStatus === 'open' || normalizedStatus === 'in progress') && !thread.topic) {
+      return false;
+    }
+
+    // Filter out threads with "Not enough messages to generate a summary." if option is selected
+    if (hideSummaryMessages && 
+        (thread.description === "Not enough messages to generate a summary." || 
+         thread.summary === "Not enough messages to generate a summary.")) {
       return false;
     }
 
@@ -211,10 +222,37 @@ const Report = () => {
       categoryMatches &&
       statusMatches
     );
+  }).sort((a, b) => {
+    // Sort by closed date (most recent closed date first)
+    // Handle threads that don't have closedAt (open threads)
+    const dateA = a.closedAt ? new Date(a.closedAt) : null;
+    const dateB = b.closedAt ? new Date(b.closedAt) : null;
+    
+    // If both have closed dates, sort by most recent closed date
+    if (dateA && dateB) {
+      return dateB - dateA;
+    }
+    
+    // If only one has a closed date, put the closed one first
+    if (dateA && !dateB) return -1;
+    if (!dateA && dateB) return 1;
+    
+    // If neither has a closed date (both are open), sort by created date as fallback
+    const createdA = new Date(a.createdAt);
+    const createdB = new Date(b.createdAt);
+    return createdB - createdA;
   });
+
+  // Pagination logic
+  const totalItems = filteredThreads.length;
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
+  const startIndex = (page - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedThreads = filteredThreads.slice(startIndex, endIndex);
 
   const handleSearchChange = (event) => {
     setSearchTerm(event.target.value);
+    setPage(1); // Reset to first page when searching
   };
 
   const handleOpenDialog = (threadId) => {
@@ -242,6 +280,12 @@ const Report = () => {
   const handleCloseChatDialog = () => {
     setOpenChatDialogThreadId(null);
     setChatMessages([]);
+  };
+
+  const handlePageChange = (event, newPage) => {
+    setPage(newPage);
+    // Scroll to top of table when page changes
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const statusColors = {
@@ -346,6 +390,8 @@ const Report = () => {
     setToDate("");
     setSelectedCategory("");
     setSelectedStatus("Closed");
+    setHideSummaryMessages(true);
+    setPage(1); // Reset to first page
   };
 
   return (
@@ -506,7 +552,7 @@ const Report = () => {
               </Stack>
               
               <Grid container spacing={2}>
-                <Grid item xs={12} md={3}>
+                <Grid item xs={12} md={2.4}>
                   <TextField
                     select
                     fullWidth
@@ -535,7 +581,7 @@ const Report = () => {
                   </TextField>
                 </Grid>
 
-                <Grid item xs={12} md={3}>
+                <Grid item xs={12} md={2.4}>
                   <TextField
                     select
                     fullWidth
@@ -569,7 +615,7 @@ const Report = () => {
                   </TextField>
                 </Grid>
 
-                <Grid item xs={12} md={3}>
+                <Grid item xs={12} md={2.4}>
                   <TextField
                     fullWidth
                     size="small"
@@ -595,7 +641,7 @@ const Report = () => {
                   />
                 </Grid>
 
-                <Grid item xs={12} md={3}>
+                <Grid item xs={12} md={2.4}>
                   <TextField
                     fullWidth
                     size="small"
@@ -620,253 +666,318 @@ const Report = () => {
                     }}
                   />
                 </Grid>
+
+                <Grid item xs={12} md={2.4}>
+                  <TextField
+                    select
+                    fullWidth
+                    size="small"
+                    label="Summary Filter"
+                    value={hideSummaryMessages ? "hide" : "show"}
+                    onChange={(e) => setHideSummaryMessages(e.target.value === "hide")}
+                  >
+                    <MenuItem value="show">Show All</MenuItem>
+                    <MenuItem value="hide">Hide Empty Summaries</MenuItem>
+                  </TextField>
+                </Grid>
               </Grid>
             </Card>
           )}
 
           <Box sx={{ position: 'relative' }}>
-            {filteredThreads.length > 0 ? (
-              <TableContainer 
-                component={Paper} 
-                sx={{ 
-                  borderRadius: 2,
-                  boxShadow: 'none',
-                  border: `1px solid ${alpha(theme.palette.divider, 0.2)}`,
-                  overflow: 'hidden',
-                  maxWidth: '100%',
-                  backgroundColor: 'transparent'
-                }}
-              >
-                <Table sx={{ minWidth: 650 }}>
-                  <TableHead sx={{ 
-                    backgroundColor: isLight 
-                      ? alpha(theme.palette.primary.main, 0.08) 
-                      : alpha(theme.palette.info.main, 0.1),
-                    position: 'sticky',
-                    top: 0,
-                    zIndex: 10
-                  }}>
-                    <TableRow>
-                      <TableCell sx={{ fontWeight: 'bold' }}>Title</TableCell>
-                      <TableCell sx={{ fontWeight: 'bold' }}>Description</TableCell>
-                      <TableCell sx={{ fontWeight: 'bold' }}>Status</TableCell>
-                      <TableCell sx={{ fontWeight: 'bold' }}>Category</TableCell>
-                      <TableCell sx={{ fontWeight: 'bold' }}>Opened Date</TableCell>
-                      <TableCell sx={{ fontWeight: 'bold' }}>Closed date</TableCell>
-                      <TableCell sx={{ fontWeight: 'bold' }}>Author</TableCell>
-                      <TableCell sx={{ fontWeight: 'bold' }}>Members</TableCell>
-                      <TableCell sx={{ fontWeight: 'bold' }}>Actions</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {filteredThreads.map((thread) => (
-                      <TableRow 
-                        key={thread._id}
-                        hover
-                        sx={{ 
-                          '&:hover': { 
-                            backgroundColor: isLight 
-                              ? alpha(theme.palette.primary.main, 0.04) 
-                              : alpha(theme.palette.info.main, 0.08),
-                          },
-                          borderBottom: `1px solid ${alpha(theme.palette.divider, 0.1)}`
-                        }}
-                      >
-                        <TableCell>
-                          <Typography variant="body2" fontWeight="medium">
-                            {thread.title}
-                          </Typography>
-                        </TableCell>
-                        <TableCell>
-                          <Box
-                            sx={{
-                              maxHeight: "4rem",
-                              maxWidth: "15rem",
-                              overflow: "hidden",
-                              textOverflow: "ellipsis",
-                            }}
-                          >
-                            <Typography 
-                              variant="body2" 
-                              sx={{ 
-                                textAlign: "justify",
-                                display: '-webkit-box',
-                                WebkitLineClamp: 2,
-                                WebkitBoxOrient: 'vertical',
-                                overflow: 'hidden'
+            {/* Add pagination info above the table */}
+            {filteredThreads.length > 0 && (
+              <Box sx={{ 
+                display: 'flex', 
+                justifyContent: 'space-between', 
+                alignItems: 'center', 
+                mb: 2,
+                px: 1
+              }}>
+                <Typography variant="body2" color="text.secondary">
+                  Showing {startIndex + 1}-{Math.min(endIndex, totalItems)} of {totalItems} results
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Page {page} of {totalPages}
+                </Typography>
+              </Box>
+            )}
+
+            {paginatedThreads.length > 0 ? (
+              <>
+                <TableContainer 
+                  component={Paper} 
+                  sx={{ 
+                    borderRadius: 2,
+                    boxShadow: 'none',
+                    border: `1px solid ${alpha(theme.palette.divider, 0.2)}`,
+                    overflow: 'hidden',
+                    maxWidth: '100%',
+                    backgroundColor: 'transparent'
+                  }}
+                >
+                  <Table sx={{ minWidth: 650 }}>
+                    <TableHead sx={{ 
+                      backgroundColor: isLight 
+                        ? alpha(theme.palette.primary.main, 0.08) 
+                        : alpha(theme.palette.info.main, 0.1),
+                      position: 'sticky',
+                      top: 0,
+                      zIndex: 10
+                    }}>
+                      <TableRow>
+                        <TableCell sx={{ fontWeight: 'bold' }}>Title</TableCell>
+                        <TableCell sx={{ fontWeight: 'bold' }}>Description</TableCell>
+                        <TableCell sx={{ fontWeight: 'bold' }}>Status</TableCell>
+                        <TableCell sx={{ fontWeight: 'bold' }}>Category</TableCell>
+                        <TableCell sx={{ fontWeight: 'bold' }}>Opened Date</TableCell>
+                        <TableCell sx={{ fontWeight: 'bold' }}>Closed date</TableCell>
+                        <TableCell sx={{ fontWeight: 'bold' }}>Author</TableCell>
+                        <TableCell sx={{ fontWeight: 'bold' }}>Members</TableCell>
+                        <TableCell sx={{ fontWeight: 'bold' }}>Actions</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {paginatedThreads.map((thread) => (
+                        <TableRow 
+                          key={thread._id}
+                          hover
+                          sx={{ 
+                            '&:hover': { 
+                              backgroundColor: isLight 
+                                ? alpha(theme.palette.primary.main, 0.04) 
+                                : alpha(theme.palette.info.main, 0.08),
+                            },
+                            borderBottom: `1px solid ${alpha(theme.palette.divider, 0.1)}`
+                          }}
+                        >
+                          <TableCell>
+                            <Typography variant="body2" fontWeight="medium">
+                              {thread.title}
+                            </Typography>
+                          </TableCell>
+                          <TableCell>
+                            <Box
+                              sx={{
+                                maxHeight: "4rem",
+                                maxWidth: "15rem",
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
                               }}
                             >
-                              {thread.description}
-                            </Typography>
-                          </Box>
-                          <Button 
-                            size="small" 
-                            onClick={() => handleOpenDialog(thread._id)}
-                            sx={{ 
-                              textTransform: 'none', 
-                              mt: 0.5,
-                              color: isLight ? theme.palette.primary.main : theme.palette.info.main,
-                              px: 1,
-                              '&:hover': {
-                                backgroundColor: isLight 
-                                  ? alpha(theme.palette.primary.main, 0.08) 
-                                  : alpha(theme.palette.info.main, 0.1),
-                              }
-                            }}
-                          >
-                            Read more
-                          </Button>
-                          <Dialog
-                            open={openDialogThreadId === thread._id}
-                            onClose={handleCloseDialog}
-                            PaperProps={{
-                              sx: {
-                                borderRadius: 2,
-                                maxWidth: 'sm',
-                                width: '100%'
-                              }
-                            }}
-                          >
-                            <DialogContent>
-                              <Typography variant="h6" gutterBottom>
-                                {thread.title}
-                              </Typography>
-                              <Divider sx={{ mb: 2 }} />
-                              <Typography variant="body2">
+                              <Typography 
+                                variant="body2" 
+                                sx={{ 
+                                  textAlign: "justify",
+                                  display: '-webkit-box',
+                                  WebkitLineClamp: 2,
+                                  WebkitBoxOrient: 'vertical',
+                                  overflow: 'hidden'
+                                }}
+                              >
                                 {thread.description}
                               </Typography>
-                            </DialogContent>
-                            <DialogActions>
-                              <Button 
-                                onClick={handleCloseDialog}
-                                variant="outlined"
-                                color={isLight ? "primary" : "info"}
-                                size="small"
-                              >
-                                Close
-                              </Button>
-                            </DialogActions>
-                          </Dialog>
-                        </TableCell>
-                        <TableCell>
-                          <Chip
-                            label={thread.status}
-                            size="small"
-                            sx={{
-                              backgroundColor: getStatusBgColor(thread.status),
-                              color: getStatusColor(thread.status),
-                              fontWeight: 'medium',
-                              borderRadius: '8px',
-                            }}
-                          />
-                        </TableCell>
-                        <TableCell>
-                          {thread.topic ? (
+                            </Box>
+                            <Button 
+                              size="small" 
+                              onClick={() => handleOpenDialog(thread._id)}
+                              sx={{ 
+                                textTransform: 'none', 
+                                mt: 0.5,
+                                color: isLight ? theme.palette.primary.main : theme.palette.info.main,
+                                px: 1,
+                                '&:hover': {
+                                  backgroundColor: isLight 
+                                    ? alpha(theme.palette.primary.main, 0.08) 
+                                    : alpha(theme.palette.info.main, 0.1),
+                                }
+                              }}
+                            >
+                              Read more
+                            </Button>
+                            <Dialog
+                              open={openDialogThreadId === thread._id}
+                              onClose={handleCloseDialog}
+                              PaperProps={{
+                                sx: {
+                                  borderRadius: 2,
+                                  maxWidth: 'sm',
+                                  width: '100%'
+                                }
+                              }}
+                            >
+                              <DialogContent>
+                                <Typography variant="h6" gutterBottom>
+                                  {thread.title}
+                                </Typography>
+                                <Divider sx={{ mb: 2 }} />
+                                <Typography variant="body2">
+                                  {thread.description}
+                                </Typography>
+                              </DialogContent>
+                              <DialogActions>
+                                <Button 
+                                  onClick={handleCloseDialog}
+                                  variant="outlined"
+                                  color={isLight ? "primary" : "info"}
+                                  size="small"
+                                >
+                                  Close
+                                </Button>
+                              </DialogActions>
+                            </Dialog>
+                          </TableCell>
+                          <TableCell>
                             <Chip
-                              label={thread.topic}
+                              label={thread.status}
                               size="small"
                               sx={{
-                                backgroundColor: isLight 
-                                  ? alpha(theme.palette.primary.main, 0.08) 
-                                  : alpha(theme.palette.info.main, 0.1),
-                                color: isLight 
-                                  ? theme.palette.primary.main 
-                                  : theme.palette.info.main,
+                                backgroundColor: getStatusBgColor(thread.status),
+                                color: getStatusColor(thread.status),
+                                fontWeight: 'medium',
                                 borderRadius: '8px',
                               }}
                             />
-                          ) : (
-                            <Typography variant="body2" color="text.secondary">
-                              No Category
+                          </TableCell>
+                          <TableCell>
+                            {thread.topic ? (
+                              <Chip
+                                label={thread.topic}
+                                size="small"
+                                sx={{
+                                  backgroundColor: isLight 
+                                    ? alpha(theme.palette.primary.main, 0.08) 
+                                    : alpha(theme.palette.info.main, 0.1),
+                                  color: isLight 
+                                    ? theme.palette.primary.main 
+                                    : theme.palette.info.main,
+                                  borderRadius: '8px',
+                                }}
+                              />
+                            ) : (
+                              <Typography variant="body2" color="text.secondary">
+                                No Category
+                              </Typography>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <Typography variant="body2">
+                              {new Date(thread.createdAt).toLocaleDateString()}
                             </Typography>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          <Typography variant="body2">
-                            {new Date(thread.createdAt).toLocaleDateString()}
-                          </Typography>
-                        </TableCell>
-                        <TableCell>
-                          <Typography variant="body2">
-                            {thread.closedAt
-                              ? new Date(thread.closedAt).toLocaleDateString()
-                              : "N/A"}
-                          </Typography>
-                        </TableCell>
-                        <TableCell>
-                          <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                            <Avatar 
-                              sx={{ 
-                                width: 28, 
-                                height: 28,
-                                bgcolor: isLight 
-                                  ? theme.palette.primary.main 
-                                  : theme.palette.info.main,
-                                fontSize: '0.875rem',
-                                mr: 1
+                          </TableCell>
+                          <TableCell>
+                            <Typography variant="body2">
+                              {thread.closedAt
+                                ? new Date(thread.closedAt).toLocaleDateString()
+                                : "N/A"}
+                            </Typography>
+                          </TableCell>
+                          <TableCell>
+                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                              <Avatar 
+                                sx={{ 
+                                  width: 28, 
+                                  height: 28,
+                                  bgcolor: isLight 
+                                    ? theme.palette.primary.main 
+                                    : theme.palette.info.main,
+                                  fontSize: '0.875rem',
+                                  mr: 1
+                                }}
+                              >
+                                {thread?.author?.name?.[0] || "?"}
+                              </Avatar>
+                              <Typography variant="body2" noWrap sx={{ maxWidth: 100 }}>
+                                {thread?.author?.name || "Unknown"}
+                              </Typography>
+                            </Box>
+                          </TableCell>
+                          <TableCell>
+                            <AvatarGroup
+                              max={3}
+                              sx={{
+                                '& .MuiAvatar-root': {
+                                  width: 28,
+                                  height: 28,
+                                  fontSize: '0.875rem',
+                                  backgroundColor: isLight 
+                                    ? alpha(theme.palette.primary.main, 0.8) 
+                                    : alpha(theme.palette.info.main, 0.8),
+                                },
                               }}
                             >
-                              {thread?.author?.name?.[0] || "?"}
-                            </Avatar>
-                            <Typography variant="body2" noWrap sx={{ maxWidth: 100 }}>
-                              {thread?.author?.name || "Unknown"}
-                            </Typography>
-                          </Box>
-                        </TableCell>
-                        <TableCell>
-                          <AvatarGroup
-                            max={3}
-                            sx={{
-                              '& .MuiAvatar-root': {
-                                width: 28,
-                                height: 28,
-                                fontSize: '0.875rem',
-                                backgroundColor: isLight 
-                                  ? alpha(theme.palette.primary.main, 0.8) 
-                                  : alpha(theme.palette.info.main, 0.8),
-                              },
-                            }}
-                          >
-                            {thread.participants.map((participant, idx) => (
-                              <Tooltip
-                                key={idx}
-                                title={participant.name}
-                                placement="top"
-                              >
-                                <Avatar alt={participant.name}>
-                                  {participant.name[0]}
-                                </Avatar>
-                              </Tooltip>
-                            ))}
-                          </AvatarGroup>
-                        </TableCell>
-                        <TableCell>
-                          <Button
-                            variant="outlined"
-                            size="small"
-                            startIcon={<ChatIcon />}
-                            onClick={() => handleOpenChatDialog(thread._id)}
-                            sx={{
-                              borderRadius: 2,
-                              textTransform: 'none',
-                              color: isLight ? theme.palette.primary.main : theme.palette.info.main,
-                              borderColor: isLight ? theme.palette.primary.main : theme.palette.info.main,
-                              '&:hover': {
-                                backgroundColor: isLight 
-                                  ? alpha(theme.palette.primary.main, 0.08) 
-                                  : alpha(theme.palette.info.main, 0.1),
-                              }
-                            }}
-                          >
-                            View Chat
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
+                              {thread.participants.map((participant, idx) => (
+                                <Tooltip
+                                  key={idx}
+                                  title={participant.name}
+                                  placement="top"
+                                >
+                                  <Avatar alt={participant.name}>
+                                    {participant.name[0]}
+                                  </Avatar>
+                                </Tooltip>
+                              ))}
+                            </AvatarGroup>
+                          </TableCell>
+                          <TableCell>
+                            <Button
+                              variant="outlined"
+                              size="small"
+                              startIcon={<ChatIcon />}
+                              onClick={() => handleOpenChatDialog(thread._id)}
+                              sx={{
+                                borderRadius: 2,
+                                textTransform: 'none',
+                                color: isLight ? theme.palette.primary.main : theme.palette.info.main,
+                                borderColor: isLight ? theme.palette.primary.main : theme.palette.info.main,
+                                '&:hover': {
+                                  backgroundColor: isLight 
+                                    ? alpha(theme.palette.primary.main, 0.08) 
+                                    : alpha(theme.palette.info.main, 0.1),
+                                }
+                              }}
+                            >
+                              View Chat
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+
+                {/* Add pagination controls below the table */}
+                {totalPages > 1 && (
+                  <Box sx={{ 
+                    display: 'flex', 
+                    justifyContent: 'center', 
+                    alignItems: 'center',
+                    mt: 3,
+                    gap: 2
+                  }}>
+                    <Typography variant="body2" color="text.secondary">
+                      {totalItems} total results
+                    </Typography>
+                    <Pagination
+                      count={totalPages}
+                      page={page}
+                      onChange={handlePageChange}
+                      color={isLight ? "primary" : "info"}
+                      variant="outlined"
+                      shape="rounded"
+                      showFirstButton
+                      showLastButton
+                      sx={{
+                        '& .MuiPaginationItem-root': {
+                          borderRadius: 2,
+                        }
+                      }}
+                    />
+                  </Box>
+                )}
+              </>
             ) : (
+              // Your existing "no results" section remains the same
               <Box 
                 sx={{ 
                   py: 6, 

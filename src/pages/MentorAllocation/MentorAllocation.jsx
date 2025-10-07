@@ -27,6 +27,7 @@ import ClearIcon from "@mui/icons-material/Clear";
 import AssignmentIndIcon from "@mui/icons-material/AssignmentInd";
 import SchoolIcon from "@mui/icons-material/School";
 import ConfirmationDialogMentor from '../Users/ConfirmationDialogMentorAllocation';
+import ConfirmationDialogUnassign from '../Users/ConfirmationDialogMentorUnallocation';
 import Page from "../../components/Page";
 import api from "../../utils/axios";
 import StudentTable from "./StudentTable";
@@ -47,6 +48,8 @@ const MentorAllocation = () => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [showFilters, setShowFilters] = useState(false);
+  const [unassignConfirmationOpen, setUnassignConfirmationOpen] = useState(false);
+  const [studentsToUnassign, setStudentsToUnassign] = useState([]);
   const rowsPerPageOptions = [5, 10, 25, 50];
 
   useEffect(() => {
@@ -199,9 +202,43 @@ const MentorAllocation = () => {
     }
   };
 
+  const handleUnassignMentor = () => {
+    // Filter selected students who have mentors
+    const studentsWithMentors = students.filter(student => 
+      selectedStudents.includes(student._id) && getMentorInfo(student)
+    );
+
+    if (studentsWithMentors.length === 0) {
+      alert("Selected students don't have mentors assigned.");
+      return;
+    }
+
+    setStudentsToUnassign(studentsWithMentors);
+    setUnassignConfirmationOpen(true);
+  };
+
   const handleConfirmReassignment = () => {
     setConfirmationOpen(false);
     setDialogOpen(true);
+  };
+
+  const handleConfirmUnassign = async () => {
+    try {
+      const response = await api.delete("/mentors/unassign", {
+        data: { menteeIds: studentsToUnassign.map(s => s._id) }
+      });
+
+      if (response.status === 200) {
+        await refreshStudents();
+        setSelectedStudents([]);
+        setUnassignConfirmationOpen(false);
+        setStudentsToUnassign([]);
+        alert(`Successfully unassigned ${response.data.unassignedCount} mentors`);
+      }
+    } catch (error) {
+      console.error("Error unassigning mentors:", error);
+      alert("Error unassigning mentors. Please try again.");
+    }
   };
 
   const clearFilters = () => {
@@ -253,6 +290,19 @@ const MentorAllocation = () => {
               >
                 Assign Mentor {selectedStudents.length > 0 && `(${selectedStudents.length})`}
               </Button>
+              
+              {/* Add this unassign button */}
+              <Button
+                variant="contained"
+                color="error"
+                disabled={selectedStudents.length === 0}
+                onClick={handleUnassignMentor}
+                endIcon={<ClearIcon />}
+                size="small"
+              >
+                Unassign Mentor {selectedStudents.length > 0 && `(${selectedStudents.length})`}
+              </Button>
+              
               <Button
                 variant="outlined"
                 color="inherit"
@@ -461,6 +511,13 @@ const MentorAllocation = () => {
         onClose={() => setConfirmationOpen(false)}
         onConfirm={handleConfirmReassignment}
         assignedStudents={studentsWithMentors}
+      />
+
+      <ConfirmationDialogUnassign
+        open={unassignConfirmationOpen}
+        onClose={() => setUnassignConfirmationOpen(false)}
+        onConfirm={handleConfirmUnassign}
+        studentsToUnassign={studentsToUnassign}
       />
 
       <MentorAssignmentDialog

@@ -62,7 +62,7 @@ const External = () => {
           setExternalData(data.semesters);
           setSelectedSemester(data.semesters[0].semester);
         } else {
-          setExternalData([]);
+          setExternalData([data]);
           setSelectedSemester(1); // Default to first semester
         }
       } else {
@@ -75,7 +75,7 @@ const External = () => {
       console.error("Error fetching external marks:", err);
       
       // For any error, including 404, just show an empty table
-      setExternalData([]);
+      setExternalData([{passingDate: null, sgpa: null, subjects: []}]);
       setSelectedSemester(1); // Default to first semester
       setLoading(false);
     }
@@ -112,31 +112,6 @@ const External = () => {
     return subjectWithCGPA ? subjectWithCGPA.cgpa : null;
   };
 
-  const handleRefresh = () => {
-    setLoading(true);
-    setError("");
-    fetchExternalData();
-  };
-
-  if (loading) {
-    return (
-      <Box sx={{ p: 2, display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '200px' }}>
-        <CircularProgress />
-      </Box>
-    );
-  }
-
-  if (error) {
-    return (
-      <Box sx={{ p: 2, textAlign: 'center' }}>
-        <Typography color="error" gutterBottom>{error}</Typography>
-        <Button variant="outlined" onClick={handleRefresh} sx={{ mt: 2 }}>
-          Try Again
-        </Button>
-      </Box>
-    );
-  }
-
   return (
     <Box sx={{ p: 2 }}>
       <Typography variant="h4" component="h1" gutterBottom align="center">
@@ -171,7 +146,13 @@ const External = () => {
                 Subject Name
               </TableCell>
               <TableCell sx={{ border: "1px solid gray", fontWeight: "bold" }}>
-                Marks
+                Internal Marks
+              </TableCell>
+              <TableCell sx={{ border: "1px solid gray", fontWeight: "bold" }}>
+                External Marks
+              </TableCell>
+              <TableCell sx={{ border: "1px solid gray", fontWeight: "bold" }}>
+                Total
               </TableCell>
               <TableCell sx={{ border: "1px solid gray", fontWeight: "bold" }}>
                 Attempt
@@ -180,7 +161,7 @@ const External = () => {
                 Result
               </TableCell>
               <TableCell sx={{ border: "1px solid gray", fontWeight: "bold" }}>
-                Passing Date
+                Completion Date
               </TableCell>
             </TableRow>
           </TableHead>
@@ -195,7 +176,13 @@ const External = () => {
                     {subject.subjectName}
                   </TableCell>
                   <TableCell sx={{ border: "1px solid gray" }}>
-                    {subject.externalMarks || "-"}
+                    {subject.internalMarks ?? "-"}
+                  </TableCell>
+                  <TableCell sx={{ border: "1px solid gray" }}>
+                    {subject.externalMarks ?? "-"}
+                  </TableCell>
+                  <TableCell sx={{ border: "1px solid gray" }}>
+                    {subject.total ?? "-"}
                   </TableCell>
                   <TableCell sx={{ border: "1px solid gray" }}>
                     {subject.attempt || "1"}
@@ -208,35 +195,40 @@ const External = () => {
                     {subject.result || "-"}
                   </TableCell>
                   <TableCell sx={{ border: "1px solid gray" }}>
-                    {subject.passingDate || "-"}
+                    {externalData.find(s => s.semester === selectedSemester)?.passingDate || "-"}
                   </TableCell>
                 </TableRow>
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={6} align="center" sx={{ py: 3 }}>
+                <TableCell colSpan={8} align="center" sx={{ py: 3 }}>
                   No external marks data available for this semester.
                 </TableCell>
               </TableRow>
             )}
             
             {/* CGPA Row - only show if there's data and a CGPA value */}
-            {getSubjectsForSemester().length > 0 && getSemesterCGPA() && (
+            {getSubjectsForSemester().length > 0 && (
               <TableRow>
                 <TableCell 
-                  colSpan={6} 
-                  align="center" 
-                  sx={{ 
-                    border: "1px solid gray", 
+                  colSpan={8}
+                  align="center"
+                  sx={{
+                    border: "1px solid gray",
                     fontWeight: "bold",
-                    bgcolor: "action.hover",
-                    textAlign: "center"
+                    bgcolor: "action.hover"
                   }}
                 >
-                  SGPA: {getSemesterCGPA() || "-"}
+                  SGPA: {
+                    (() => {
+                      const semesterObj = externalData.find(s => s.semester === selectedSemester);
+                      return semesterObj?.sgpa ?? "-";
+                    })()
+                  }
                 </TableCell>
               </TableRow>
             )}
+
           </TableBody>
         </Table>
       </TableContainer>

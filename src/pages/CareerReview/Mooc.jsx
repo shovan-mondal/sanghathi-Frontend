@@ -15,6 +15,13 @@ export default function Mooc() {
     const { user } = useContext(AuthContext);
     const [searchParams] = useSearchParams();
     const menteeId = searchParams.get('menteeId');
+    
+    // Check if the current user is faculty
+    const isFaculty = user?.roleName === "faculty";
+    
+    // Fields should be editable only if user is not faculty
+    const isEditable = !isFaculty;
+    
     console.log("User : ",user);
     console.log("id: ",menteeId);
 
@@ -83,6 +90,13 @@ export default function Mooc() {
 
   return (
     <FormProvider methods={methods} onSubmit={handleSubmit(onSubmit)}>
+      {isFaculty && (
+        <Box sx={{ mb: 2, p: 2, bgcolor: 'warning.light', borderRadius: 1 }}>
+          <Typography variant="body2" color="warning.dark">
+            You are viewing this student profile in read-only mode. Only students can edit their own profiles.
+          </Typography>
+        </Box>
+      )}
           <Card sx={{ p: 3 }}>
             <Grid container spacing={2}>
               {fields.map((item, index) => (
@@ -106,6 +120,10 @@ export default function Mooc() {
                     name={`mooc[${index}].portal`} 
                     label="Course Portal"
                     fullWidth
+                    disabled={!isEditable}
+                    InputProps={{
+                      readOnly: !isEditable,
+                    }}
                   />
                   </Grid>
                   <Grid item xs={3}>
@@ -113,6 +131,10 @@ export default function Mooc() {
                     name={`mooc[${index}].title`} 
                     label="Mooc Title"
                     fullWidth
+                    disabled={!isEditable}
+                    InputProps={{
+                      readOnly: !isEditable,
+                    }}
                   />
                   </Grid>
                   <Grid item xs={2}>
@@ -122,6 +144,10 @@ export default function Mooc() {
                     type="date"
                     InputLabelProps={{ shrink: true }}
                     fullWidth
+                    disabled={!isEditable}
+                    InputProps={{
+                      readOnly: !isEditable,
+                    }}
                   />
                   </Grid>
                   <Grid item xs={2}>
@@ -131,6 +157,10 @@ export default function Mooc() {
                     type="date"
                     InputLabelProps={{ shrink: true }}
                     fullWidth
+                    disabled={!isEditable}
+                    InputProps={{
+                      readOnly: !isEditable,
+                    }}
                   />
                   </Grid>
                   <Grid item xs={2}>
@@ -138,6 +168,10 @@ export default function Mooc() {
                     name={`mooc[${index}].score`} 
                     label="Score"
                     fullWidth
+                    disabled={!isEditable}
+                    InputProps={{
+                      readOnly: !isEditable,
+                    }}
                   />
                   </Grid>
                   <Grid item xs={5}>
@@ -145,36 +179,46 @@ export default function Mooc() {
                     name={`mooc[${index}].certificateLink`} 
                     label="Certificate Link"
                     fullWidth
+                    disabled={!isEditable}
+                    InputProps={{
+                      readOnly: !isEditable,
+                    }}
                   />
                   </Grid>
                   <Grid item xs={1}>
-                    <IconButton color="error" onClick={() => remove(index)} sx={{ mt: 1 }}>
-                      <DeleteIcon />
-                    </IconButton>
+                    {isEditable && (
+                      <IconButton color="error" onClick={() => remove(index)} sx={{ mt: 1 }}>
+                        <DeleteIcon />
+                      </IconButton>
+                    )}
                   </Grid>
                 </Grid>
               ))}        
                 <Grid item xs={12}>
-                  <Button 
-                    variant="contained" 
-                    onClick={() => append({ portal: "", title: "", startDate: null, completedDate: null, score: null, certificateLink: "" })} 
-                    sx={{ mt: 2, display: "block", mx: "auto" }}>
-                    Add Row
-                  </Button>
+                  {isEditable && (
+                    <Button 
+                      variant="contained" 
+                      onClick={() => append({ portal: "", title: "", startDate: null, completedDate: null, score: null, certificateLink: "" })} 
+                      sx={{ mt: 2, display: "block", mx: "auto" }}>
+                      Add Row
+                    </Button>
+                  )}
                 </Grid>
         <Grid item xs={12}>
             <Stack direction="row" spacing={2} justifyContent="flex-end">
               <Box display="flex" gap={1}>
-                {import.meta.env.MODE === "development" && (
+                {import.meta.env.MODE === "development" && isEditable && (
                   <LoadingButton 
                   variant="outlined" 
                   onClick={handleReset}>
                     Reset
                   </LoadingButton>
                 )}
-                <LoadingButton type="submit" variant="contained" loading={isSubmitting}>
-                  Save
-                </LoadingButton>
+                {isEditable && (
+                  <LoadingButton type="submit" variant="contained" loading={isSubmitting}>
+                    Save
+                  </LoadingButton>
+                )}
               </Box>
             </Stack>
         </Grid>

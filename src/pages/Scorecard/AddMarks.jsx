@@ -37,16 +37,16 @@ const AddMarks = () => {
 
   const downloadTemplate = () => {
     // Create CSV content
-    const headers = ["Semester", "USN", "Subject Code", "Subject Name", "External Marks", "Attempt", "Passing Date", "CGPA", "Result"];
-    const row1 = ["1", "1MS21CS001", "CS101", "Computer Science Basics", "85", "1", "2023-05-15", "8.5", "PASS"];
-    const row2 = ["1", "1MS21CS001", "MA101", "Mathematics I", "75", "1", "2023-05-20", "8.5", "PASS"];
-    
-    const csvContent = [
-      headers.join(','),
-      row1.join(','),
-      row2.join(',')
-    ].join('\n');
-
+    const headers = ["Semester", "USN"];
+    for (let i = 1; i <= 2; i++) {
+      headers.push(`Subject Code ${i}`, `Subject Name ${i}`, `Internal Marks ${i}`, `External Marks ${i}`, `Total ${i}`, `Attempt ${i}`, `Result ${i}`);
+    }
+    headers.push(`Passing Date`);
+    headers.push(`sgpa`);
+    const csvContent = [headers.join(',')];
+    const row1 = [];
+    csvContent.push(row1.join(','));
+  
     // Create blob and download
     const blob = new Blob([csvContent], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);
@@ -55,53 +55,75 @@ const AddMarks = () => {
     a.download = 'external_marks_template.csv';
     document.body.appendChild(a);
     a.click();
-    document.body.removeChild(a);
-    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);  
+    window.URL.revokeObjectURL(url);  
   };
-
+  
   const processCSV = (csvData) => {
-    const studentGroups = new Map(); // Group by student USN first
-    
-    // Skip header row and process data
-    for (let i = 1; i < csvData.length; i++) {
-      const row = csvData[i];
-      // Check if row has all required fields
-      if (row.length >= 9) {
-        const semester = parseInt(row[0]);
-        const usn = row[1].trim();
-        const subjectCode = row[2];
-        const subjectName = row[3];
-        const externalMarks = parseInt(row[4]);
-        const attempt = parseInt(row[5]);
-        const passingDate = row[6];
-        const cgpa = parseFloat(row[7]);
-        const result = row[8].toUpperCase();
+  const studentsData = [];
 
-        if (!isNaN(semester) && usn && subjectCode && subjectName && !isNaN(externalMarks)) {
-          if (!studentGroups.has(usn)) {
-            studentGroups.set(usn, new Map());
+  for (let i = 1; i < csvData.length; i++) {
+    const row = csvData[i];
+    if (row.length >= 2 && row[0] && row[1]) {
+      const semester = parseInt(row[0]);
+      const usn = row[1].trim().toUpperCase();
+      const subjects = [];
+
+      // Last two fields are Passing Date and SGPA
+      const passingDate = row[row.length - 2]?.trim();
+      const sgpa = parseFloat(row[row.length - 1]);
+
+      for (let j = 2; j < row.length - 2; j += 7) {
+        const [code, name, internal, external, total, attempt, result] = row.slice(j, j + 7);
+        if (code && name && internal && external && total && attempt && result) {
+          const internalMarks = parseInt(internal);
+          const externalMarks = parseInt(external);
+          const totalMarks = parseInt(total);
+          const attemptNo = parseInt(attempt);
+          const resultStatus = result.toUpperCase();
+
+          if (!isNaN(internalMarks) && !isNaN(externalMarks) && !isNaN(totalMarks) && !isNaN(attemptNo) && (resultStatus === "P" || resultStatus === "F")) {
+            subjects.push({
+              subjectCode: code,
+              subjectName: name,
+              internalMarks,
+              externalMarks,
+              total: totalMarks,
+              attempt: attemptNo,
+              result: resultStatus === "P" ? "PASS" : "FAIL"
+            });
           }
-          
-          const semesterGroups = studentGroups.get(usn);
-          if (!semesterGroups.has(semester)) {
-            semesterGroups.set(semester, []);
-          }
-          
-          semesterGroups.get(semester).push({
-            subjectCode,
-            subjectName,
-            externalMarks,
-            attempt: isNaN(attempt) ? 1 : attempt,
-            passingDate: passingDate || null,
-            cgpa: isNaN(cgpa) ? null : cgpa,
-            result: result === "PASS" || result === "FAIL" ? result : "FAIL",
-          });
         }
       }
+
+      if (subjects.length > 0) {
+        studentsData.push({
+          semester,
+          usn,
+          subjects,
+          passingDate,
+          sgpa
+        });
+      }
     }
-    
-    return studentGroups;
-  };
+  }
+
+  // Group by USN
+  const studentGroups = new Map();
+  for (const student of studentsData) {
+    if (!studentGroups.has(student.usn)) {
+      studentGroups.set(student.usn, []);
+    }
+    studentGroups.get(student.usn).push({
+      semester: student.semester,
+      subjects: student.subjects,
+      passingDate: student.passingDate,
+      sgpa: student.sgpa
+    });
+  }
+
+  return studentGroups;
+};
 
   // Function to look up a student's userId by their USN
   const fetchUserIdByUSN = async (usn) => {
@@ -143,8 +165,8 @@ const AddMarks = () => {
         try {
           const csvText = event.target.result;
           const parsedData = Papa.parse(csvText).data;
-          const studentGroups = processCSV(parsedData);
-          
+          const studentGroups = processCSV(parsedData);  
+
           // Create an array to track results for each student
           const results = [];
           
@@ -170,32 +192,33 @@ const AddMarks = () => {
               }
               
               // Submit data for each semester
-              for (const [semester, subjects] of semesterGroups) {
-                console.log(`Submitting semester ${semester} data for USN ${usn}:`, subjects);
-                
-                // Make sure we're sending all fields properly
-                const formattedSubjects = subjects.map(subject => ({
-                  subjectCode: subject.subjectCode,
-                  subjectName: subject.subjectName,
-                  externalMarks: subject.externalMarks,
-                  attempt: subject.attempt || 1,
-                  passingDate: subject.passingDate || null, // Make sure this is sent
-                  cgpa: subject.cgpa || null, // Make sure this is sent
-                  result: subject.result || "FAIL"
-                }));
-                
-                await axios.post(
-                  `${BASE_URL}/students/external/${studentId}`, 
-                  {
-                    semester,
-                    subjects: formattedSubjects,
-                  },
-                  {
-                    headers: {
-                      Authorization: `Bearer ${token}`
+              for (const semesterData of semesterGroups) {
+                const { semester, subjects } = semesterData;
+                if (subjects && subjects.length > 0) {
+                  console.log(`Submitting semester ${semester} data for USN ${usn}:`, subjects);
+                  
+                  const formattedSubjects = subjects.map(subject => ({
+                    subjectCode: subject.subjectCode,
+                    subjectName: subject.subjectName,
+                    internalMarks: subject.internalMarks,
+                    externalMarks: subject.externalMarks,
+                    total: subject.total,
+                    attempt: subject.attempt,
+                    result: subject.result
+                  }));
+                  await axios.post(
+                    `${BASE_URL}/students/external/${studentId}`,
+                    {
+                      semester,
+                      subjects: formattedSubjects,
+                      passingDate: semesterData.passingDate,
+                      sgpa: semesterData.sgpa
+                    },
+                    {
+                      headers: { Authorization: `Bearer ${token}` }
                     }
-                  }
-                );
+                  );
+                }
               }
               
               // Add success result for this student
@@ -349,15 +372,19 @@ const AddMarks = () => {
               py: 1,
             }}
           >
-            <Typography variant="body2" color="text.secondary">• Column 1: Semester Number</Typography>
-            <Typography variant="body2" color="text.secondary">• Column 2: USN</Typography>
-            <Typography variant="body2" color="text.secondary">• Column 3: Subject Code</Typography>
-            <Typography variant="body2" color="text.secondary">• Column 4: Subject Name</Typography>
-            <Typography variant="body2" color="text.secondary">• Column 5: External Marks</Typography>
-            <Typography variant="body2" color="text.secondary">• Column 6: Attempt Number (1-4)</Typography>
-            <Typography variant="body2" color="text.secondary">• Column 7: Passing Date (YYYY-MM-DD)</Typography>
-            <Typography variant="body2" color="text.secondary">• Column 8: CGPA</Typography>
-            <Typography variant="body2" color="text.secondary">• Column 9: Result (PASS/FAIL)</Typography>
+          <Typography variant="body2" color="text.secondary">• Column 1: Semester Number</Typography>
+          <Typography variant="body2" color="text.secondary">• Column 2: USN</Typography>
+          {[...Array(1)].map((_, i) => (
+            <Box key={i} sx={{ ml: 2 }}>
+              <Typography variant="body2" color="text.secondary">{`• Column ${3 + i * 7}: Subject Code ${i + 1}`}</Typography>
+              <Typography variant="body2" color="text.secondary">{`• Column ${4 + i * 7}: Subject Name ${i + 1}`}</Typography>
+              <Typography variant="body2" color="text.secondary">{`• Column ${5 + i * 7}: Internal Marks ${i + 1}`}</Typography>
+              <Typography variant="body2" color="text.secondary">{`• Column ${6 + i * 7}: External Marks ${i + 1}`}</Typography>
+              <Typography variant="body2" color="text.secondary">{`• Column ${7 + i * 7}: Total ${i + 1}`}</Typography>
+              <Typography variant="body2" color="text.secondary">{`• Column ${8 + i * 7}: Attempt ${i + 1}`}</Typography>
+              <Typography variant="body2" color="text.secondary">{`• Column ${9 + i * 7}: Result ${i + 1} (P/F)`}</Typography>
+            </Box>
+          ))}
           </Box>
 
           <Divider sx={{ my: 3 }} />

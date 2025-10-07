@@ -3,7 +3,7 @@ import { useSnackbar } from "notistack";
 import api from "../../utils/axios";
 import { useForm } from "react-hook-form";
 import { AuthContext } from "../../context/AuthContext";
-import { Box, Grid, Card, Stack, useTheme } from "@mui/material";
+import { Box, Grid, Card, Stack, useTheme, Typography } from "@mui/material";
 import { LoadingButton } from "@mui/lab";
 import { useSearchParams } from "react-router-dom";
 
@@ -20,6 +20,12 @@ export default function CareerCounselling() {
   const menteeId = searchParams.get('menteeId');
   const theme = useTheme();
   const isLight = theme.palette.mode === 'light';
+  
+  // Check if the current user is faculty
+  const isFaculty = user?.roleName === "faculty";
+  
+  // Fields should be editable only if user is not faculty
+  const isEditable = !isFaculty;
   
   console.log("User : ",user);
   console.log("id: ",menteeId);
@@ -101,10 +107,25 @@ export default function CareerCounselling() {
 
   return (
       <FormProvider methods={methods} onSubmit={handleSubmit(onSubmit)}>
+        {isFaculty && (
+          <Box sx={{ mb: 2, p: 2, bgcolor: 'warning.light', borderRadius: 1 }}>
+            <Typography variant="body2" color="warning.dark">
+              You are viewing this student profile in read-only mode. Only students can edit their own profiles.
+            </Typography>
+          </Box>
+        )}
         <Card sx={{ p: 3 }}>
           <Grid container spacing={2}>
             <Grid item xs={12}>
-              <RHFSelect name="TechnicalStudies" label="Technical Studies" InputLabelProps={{ shrink: isDataFetched }}>
+              <RHFSelect 
+                name="TechnicalStudies" 
+                label="Technical Studies" 
+                InputLabelProps={{ shrink: isDataFetched }}
+                disabled={!isEditable}
+                InputProps={{
+                  readOnly: !isEditable,
+                }}
+              >
                 <option value="" />
                 {TechnicalStudies.map((option) => (
                   <option key={option} value={option}>
@@ -115,7 +136,15 @@ export default function CareerCounselling() {
             </Grid>
 
             <Grid item xs={12}>
-              <RHFSelect name="ManagementStudies" label="Management Studies" InputLabelProps={{ shrink: isDataFetched }}>
+              <RHFSelect 
+                name="ManagementStudies" 
+                label="Management Studies" 
+                InputLabelProps={{ shrink: isDataFetched }}
+                disabled={!isEditable}
+                InputProps={{
+                  readOnly: !isEditable,
+                }}
+              >
                 <option value="" />
                 {ManagementStudies.map((option) => (
                   <option key={option} value={option}>
@@ -126,7 +155,15 @@ export default function CareerCounselling() {
             </Grid>
 
             <Grid item xs={12}>
-              <RHFSelect name="Entrepreneur" label="Entrepreneur" InputLabelProps={{ shrink: isDataFetched }}>
+              <RHFSelect 
+                name="Entrepreneur" 
+                label="Entrepreneur" 
+                InputLabelProps={{ shrink: isDataFetched }}
+                disabled={!isEditable}
+                InputProps={{
+                  readOnly: !isEditable,
+                }}
+              >
                 <option value="" />
                 {Entrepreneur.map((option) => (
                   <option key={option} value={option}>
@@ -137,7 +174,15 @@ export default function CareerCounselling() {
             </Grid>
 
             <Grid item xs={12}>
-              <RHFSelect name="Job" label="Job" InputLabelProps={{ shrink: isDataFetched }}>
+              <RHFSelect 
+                name="Job" 
+                label="Job" 
+                InputLabelProps={{ shrink: isDataFetched }}
+                disabled={!isEditable}
+                InputProps={{
+                  readOnly: !isEditable,
+                }}
+              >
                 <option value="" />
                 {Job.map((option) => (
                   <option key={option} value={option}>
@@ -152,6 +197,10 @@ export default function CareerCounselling() {
                 name="CompetitiveExams"
                 label="Competitive Exams plan to attend"
                 InputLabelProps={{ shrink: isDataFetched }}
+                disabled={!isEditable}
+                InputProps={{
+                  readOnly: !isEditable,
+                }}
               >
                 <option value="" />
                 {CompetitiveExams.map((option) => (
@@ -170,6 +219,10 @@ export default function CareerCounselling() {
                 multiline
                 fullWidth
                 rows={4}
+                disabled={!isEditable}
+                InputProps={{
+                  readOnly: !isEditable,
+                }}
               />
             </Grid>
 
@@ -181,6 +234,10 @@ export default function CareerCounselling() {
                 multiline
                 fullWidth
                 rows={4}
+                disabled={!isEditable}
+                InputProps={{
+                  readOnly: !isEditable,
+                }}
               />
             </Grid>
 
@@ -192,6 +249,10 @@ export default function CareerCounselling() {
                 multiline
                 fullWidth
                 rows={4}
+                disabled={!isEditable}
+                InputProps={{
+                  readOnly: !isEditable,
+                }}
               />
             </Grid>
 
@@ -203,27 +264,35 @@ export default function CareerCounselling() {
                 multiline
                 fullWidth
                 rows={4}
+                disabled={!isEditable}
+                InputProps={{
+                  readOnly: !isEditable,
+                }}
               />
             </Grid>
             
             <Grid item xs={12}>
               <Stack spacing={3} alignItems="flex-end" sx={{ mt: 3 }}>
                 <Box display="flex" gap={1}>
-                  <LoadingButton
-                    variant="outlined"
-                    color={isLight ? "primary" : "info"}
-                    onClick={handleReset}
-                  >
-                    Reset
-                  </LoadingButton>
-                  <LoadingButton
-                    type="submit"
-                    variant="contained"
-                    color={isLight ? "primary" : "info"}
-                    loading={isSubmitting}
-                  >
-                    Save
-                  </LoadingButton>
+                  {isEditable && (
+                    <LoadingButton
+                      variant="outlined"
+                      color={isLight ? "primary" : "info"}
+                      onClick={handleReset}
+                    >
+                      Reset
+                    </LoadingButton>
+                  )}
+                  {isEditable && (
+                    <LoadingButton
+                      type="submit"
+                      variant="contained"
+                      color={isLight ? "primary" : "info"}
+                      loading={isSubmitting}
+                    >
+                      Save
+                    </LoadingButton>
+                  )}
                 </Box>
               </Stack>
             </Grid>

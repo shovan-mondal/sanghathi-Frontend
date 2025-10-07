@@ -85,7 +85,7 @@ const MenteesList = () => {
     <TableContainer
       component={Paper}
       sx={{
-        maxWidth: 900,
+        maxWidth: 1100, // Increased width to accommodate USN column
         margin: "auto",
         mt: 5,
         bgcolor: theme.palette.background.paper,
@@ -107,6 +107,9 @@ const MenteesList = () => {
           <TableRow>
             <TableCell sx={{ color: isLight ? theme.palette.text.primary : "white" }}>
               <b>Full Name</b>
+            </TableCell>
+            <TableCell sx={{ color: isLight ? theme.palette.text.primary : "white" }}>
+              <b>USN</b>
             </TableCell>
             <TableCell sx={{ color: isLight ? theme.palette.text.primary : "white" }}>
               <b>Email</b>
@@ -135,9 +138,18 @@ const MenteesList = () => {
           ) : (
             mentees.map((mentee) => (
               <TableRow key={mentee._id} hover>
-                <TableCell sx={{ color: theme.palette.text.primary }}>{mentee.name}</TableCell>
-                <TableCell sx={{ color: theme.palette.text.primary }}>{mentee.email}</TableCell>
-                <TableCell sx={{ color: theme.palette.text.primary }}>{mentee.phone}</TableCell>
+                <TableCell sx={{ color: theme.palette.text.primary }}>
+                  {mentee.name}
+                </TableCell>
+                <TableCell sx={{ color: theme.palette.text.primary }}>
+                  {profiles[mentee._id]?.usn || "N/A"}
+                </TableCell>
+                <TableCell sx={{ color: theme.palette.text.primary }}>
+                  {mentee.email}
+                </TableCell>
+                <TableCell sx={{ color: theme.palette.text.primary }}>
+                  {mentee.phone}
+                </TableCell>
                 <TableCell sx={{ color: theme.palette.text.primary }}>
                   {profiles[mentee._id]?.department || "N/A"}
                 </TableCell>

@@ -21,7 +21,7 @@
     "@google/generative-ai": "^0.24.1",
     "@hookform/resolvers": "^2.8.8",
     "@iconify/react": "^4.1.0",
-    "@mui/icons-material": "^5.10.16",
+    "@mui/icons-material": "^5.18.0",
     "@mui/lab": "^5.0.0-alpha.125",
     "@mui/material": "^5.10.16",
     "@mui/x-date-pickers": "^6.0.2",

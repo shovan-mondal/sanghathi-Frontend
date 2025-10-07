@@ -31,7 +31,7 @@ This platform provides comprehensive tools for educators, mentors, and mentees a
 
 ````bash
 git clone https://github.com/Sanghathi/sanghathi-Frontend.git
-cd cmrit-mentoring-tool-frontend
+cd sanghathi
 
 ````
 

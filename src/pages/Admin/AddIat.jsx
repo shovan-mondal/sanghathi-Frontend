@@ -35,15 +35,25 @@ const AddIat = () => {
 
   const downloadTemplate = () => {
     const headers = [
-      "USN",
-      "Sem",
-      "SubjectCode", 
-      "SubjectName",
-      "IAT1",
-      "IAT2",
-      "Avg"
+      "USN", "SEMESTER",
+      "SUBJECT CODE", "SUBJECT NAME", "IAT1", "IAT2", "IA FINAL Marks",
+      "SUBJECT CODE", "SUBJECT NAME", "IAT1", "IAT2", "IA FINAL",
+      "SUBJECT CODE", "SubjectName", "IAT1", "IAT2", "Final IA Marks",
+      "SubjectCode", "SubjectName", "IAT1", "IAT2", "Final IA Marks",
+      "SubjectCode", "SubjectName", "IAT1", "IAT2", "Final IA Marks",
+      "SubjectCode", "SubjectName", "IAT1", "IAT2", "Final IA Marks",
+      "Subject Code", "SubjectName", "IAT1", "IAT2", "Final IA Marks"
     ];
-    const exampleRow = ["USN123", "1", "CS101", "Introduction to Programming", "50", "50","50" ];
+    const exampleRow = [
+      "1CR23IS001", "IV",
+      "BCS401", "Ada", "AB", "AB", "22",
+      "BIS402", "Advanced Java", "0", "0", "20",
+      "BCS403", "DBMS", "0", "0", "22",
+      "BBOC407", "Biology", "0", "0", "22",
+      "BSCK307", "UHV", "0", "0", "22",
+      "BCSL404", "Ada Lab", "0", "0", "22",
+      "BCS405A", "Dms", "0", "0", "22"
+    ];
     const csvContent = Papa.unparse([headers, exampleRow], { quotes: true });
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
     const link = document.createElement("a");
@@ -59,7 +69,7 @@ const AddIat = () => {
   const handleFileUpload = (event) => {
     const file = event.target.files[0];
     if (!file) return;
-    
+
     setFile(file);
     setProcessing(true);
     setErrors([]);
@@ -83,11 +93,43 @@ const AddIat = () => {
         const results = Papa.parse(content, {
           header: true,
           skipEmptyLines: true,
-          transform: (value) => (value === "" ? undefined : value), //  Convert empty strings to undefined
+          transform: (value) => (value === "" ? undefined : value),
         });
         rows = results.data;
       }
-      await processRows(rows);
+      // Convert wide rows to normalized rows
+      const normalizedRows = [];
+      for (const row of rows) {
+        // USN and SEMESTER
+        const usn = row["USN"];
+        const semester = row["SEMESTER"];
+        // Each subject group is 5 columns, starting from index 2
+        const subjectKeys = Object.keys(row).filter(
+          (k) => k !== "USN" && k !== "SEMESTER"
+        );
+        for (let i = 0; i < subjectKeys.length; i += 5) {
+          const codeKey = subjectKeys[i];
+          const nameKey = subjectKeys[i + 1];
+          const iat1Key = subjectKeys[i + 2];
+          const iat2Key = subjectKeys[i + 3];
+          const finalKey = subjectKeys[i + 4];
+          if (
+            row[codeKey] &&
+            row[nameKey]
+          ) {
+            normalizedRows.push({
+              USN: usn,
+              SEMESTER: semester,
+              SubjectCode: row[codeKey],
+              SubjectName: row[nameKey],
+              IAT1: row[iat1Key],
+              IAT2: row[iat2Key],
+              FinalIA: row[finalKey],
+            });
+          }
+        }
+      }
+      await processRows(normalizedRows);
     };
     reader.readAsText(file);
   };
@@ -95,39 +137,37 @@ const AddIat = () => {
   const processRows = async (rows) => {
     let success = 0;
     let errors = 0;
-    const newErrors = [];
+    const newErrors = {};
 
-    // Group rows by USN and Semester
+    // Group by USN and SEMESTER
     const groupedData = {};
     for (const row of rows) {
-      if (!row.USN || !row.Sem || !row.SubjectCode || !row.SubjectName) {
-        newErrors.push(`Row with missing USN, Sem, SubjectCode, or SubjectName: ${JSON.stringify(row)}`);
+      if (!row.USN || !row.SEMESTER || !row.SubjectCode || !row.SubjectName) {
+        const errMsg = `Row with missing USN, SEMESTER, SubjectCode, or SubjectName: ${JSON.stringify(row)}`;
+        newErrors[errMsg] = true;
         errors++;
-        continue; // Skip to the next row
+        continue;
       }
-
-      const key = `${row.USN}-${row.Sem}`;
+      const key = `${row.USN}-${row.SEMESTER}`;
       if (!groupedData[key]) {
         groupedData[key] = {
           usn: row.USN,
-          semester: parseInt(row.Sem, 10),
+          semester: row.SEMESTER,
           subjects: [],
         };
       }
       groupedData[key].subjects.push({
         subjectCode: row.SubjectCode,
         subjectName: row.SubjectName,
-        iat1: row.IAT1 !== undefined ? parseInt(row.IAT1, 10) : undefined, // Parse, handle undefined
-        iat2: row.IAT2 !== undefined ? parseInt(row.IAT2, 10) : undefined,
-        avg: row.Avg !== undefined ? parseInt(row.Avg, 10) : undefined,
+        iat1: row.IAT1 !== undefined && row.IAT1 !== "AB" ? parseInt(row.IAT1, 10) : row.IAT1,
+        iat2: row.IAT2 !== undefined && row.IAT2 !== "AB" ? parseInt(row.IAT2, 10) : row.IAT2,
+        avg: row.FinalIA !== undefined && row.FinalIA !== "AB" ? parseInt(row.FinalIA, 10) : row.FinalIA,
       });
     }
 
-    // Process each group (USN and Semester combination)
     for (const key in groupedData) {
       const data = groupedData[key];
       try {
-        // Get userId by USN (as before)
         const response = await axios.get(
           `${BASE_URL}/users/usn/${data.usn}`
         );
@@ -135,14 +175,10 @@ const AddIat = () => {
           throw new Error(`User with USN ${data.usn} not found`);
         }
         const userId = response.data.userId;
-
-        // Prepare the data for the IAT API
         const iatData = {
           semester: data.semester,
           subjects: data.subjects,
         };
-
-        // Submit IAT data
         await axios.post(
           `${BASE_URL}/students/iat/${userId}`,
           iatData
@@ -150,13 +186,13 @@ const AddIat = () => {
         success++;
       } catch (error) {
         errors++;
-        newErrors.push(`Error for USN ${data.usn}, Semester ${data.semester}: ${error.message}`);
+        newErrors[`Error for USN ${data.usn}, Semester ${data.semester}: ${error.message}`] = true;
       }
     }
 
     setSuccessCount(success);
     setErrorCount(errors);
-    setErrors(newErrors);
+    setErrors(Object.keys(newErrors));
     setProcessing(false);
   };
 

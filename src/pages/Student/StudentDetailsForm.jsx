@@ -65,10 +65,19 @@ const getCloudinaryPublicId = (url) => {
   }
 };
 
-export default function StudentDetailsForm({ colorMode, menteeId, isAdminEdit }) {
+export default function 
+StudentDetailsForm({ colorMode, menteeId, isAdminEdit }) {
   const { enqueueSnackbar } = useSnackbar();
   const { user } = useContext(AuthContext);
   const [isDataFetched, setIsDataFetched] = useState(false);
+
+  // Check if the current user is faculty
+  const isFaculty = user?.roleName === "faculty";
+  
+  // Fields should be editable only if:
+  // 1. User is a student (not faculty)
+  // 2. OR if it's admin edit mode
+  const isEditable = !isFaculty || isAdminEdit;
 
   const methods = useForm({
     defaultValues: {
@@ -388,6 +397,13 @@ export default function StudentDetailsForm({ colorMode, menteeId, isAdminEdit })
 
   return (
     <FormProvider methods={methods} onSubmit={handleSubmit(onSubmit)}>
+      {isFaculty && (
+        <Box sx={{ mb: 2, p: 2, bgcolor: 'warning.light', borderRadius: 1 }}>
+          <Typography variant="body2" color="warning.dark">
+            You are viewing this student profile in read-only mode. Only students can edit their own profiles.
+          </Typography>
+        </Box>
+      )}
       <Grid container spacing={2}>
         <Grid item xs={12} md={4}>
           <Card sx={{ height: "100%", py: 10, px: 3, textAlign: "center" }}>
@@ -395,6 +411,7 @@ export default function StudentDetailsForm({ colorMode, menteeId, isAdminEdit })
               name="studentProfile.photo"
               value={watch('studentProfile.photo')}
               onChange={(url) => setValue('studentProfile.photo', url)}
+              disabled={!isEditable}
             />
             <Typography variant="caption" sx={{ mt: 2, display: 'block', color: 'text.secondary' }}>
               Allowed formats: JPG, PNG, GIF. Max size: 3MB
@@ -411,6 +428,10 @@ export default function StudentDetailsForm({ colorMode, menteeId, isAdminEdit })
                 fullWidth
                 required={!isDataFetched}
                 autoComplete="given-name"
+                disabled={!isEditable}
+                InputProps={{
+                  readOnly: !isEditable,
+                }}
                 InputLabelProps={{
                   shrink: shouldShrink("studentProfile.fullName.firstName"),
                 }}
@@ -420,6 +441,10 @@ export default function StudentDetailsForm({ colorMode, menteeId, isAdminEdit })
                 label="Middle Name"
                 fullWidth
                 autoComplete="additional-name"
+                disabled={!isEditable}
+                InputProps={{
+                  readOnly: !isEditable,
+                }}
                 InputLabelProps={{
                   shrink: shouldShrink("studentProfile.fullName.middleName"),
                 }}
@@ -430,6 +455,10 @@ export default function StudentDetailsForm({ colorMode, menteeId, isAdminEdit })
                 fullWidth
                 required={!isDataFetched}
                 autoComplete="family-name"
+                disabled={!isEditable}
+                InputProps={{
+                  readOnly: !isEditable,
+                }}
                 InputLabelProps={{
                   shrink: shouldShrink("studentProfile.fullName.lastName"),
                 }}
@@ -438,9 +467,8 @@ export default function StudentDetailsForm({ colorMode, menteeId, isAdminEdit })
                 name="studentProfile.department"
                 label="Department"
                 fullWidth
-                disabled={!isAdminEdit}
                 InputProps={{
-                  readOnly: !isAdminEdit,
+                  readOnly: true,
                 }}
                 InputLabelProps={{
                   shrink: shouldShrink("studentProfile.department"),
@@ -457,6 +485,10 @@ export default function StudentDetailsForm({ colorMode, menteeId, isAdminEdit })
                 label="Semester"
                 fullWidth
                 required={!isDataFetched}
+                disabled={!isEditable}
+                InputProps={{
+                  readOnly: true,
+                }}
                 InputLabelProps={{
                   shrink: shouldShrink("studentProfile.sem"),
                 }}
@@ -474,6 +506,10 @@ export default function StudentDetailsForm({ colorMode, menteeId, isAdminEdit })
                 fullWidth
                 required={!isDataFetched}
                 autoComplete="email"
+                disabled={!isEditable}
+                InputProps={{
+                  readOnly: !isEditable,
+                }}
                 InputLabelProps={{
                   shrink: shouldShrink("studentProfile.personalEmail"),
                 }}
@@ -491,9 +527,8 @@ export default function StudentDetailsForm({ colorMode, menteeId, isAdminEdit })
                   label="College Email"
                   type="email"
                   fullWidth
-                  disabled={!isAdminEdit}
                   InputProps={{
-                    readOnly: !isAdminEdit,
+                    readOnly: true,
                   }}
                   InputLabelProps={{
                     shrink: shouldShrink("studentProfile.email"),
@@ -505,9 +540,8 @@ export default function StudentDetailsForm({ colorMode, menteeId, isAdminEdit })
                   name="studentProfile.usn"
                   label="USN"
                   fullWidth
-                  disabled={!isAdminEdit}
                   InputProps={{
-                    readOnly: !isAdminEdit,
+                    readOnly: true,
                   }}
                   InputLabelProps={{
                     shrink: shouldShrink("studentProfile.usn"),
@@ -521,6 +555,10 @@ export default function StudentDetailsForm({ colorMode, menteeId, isAdminEdit })
                   type="date"
                   fullWidth
                   required={!isDataFetched}
+                  disabled={!isEditable}
+                  InputProps={{
+                    readOnly: !isEditable,
+                  }}
                   InputLabelProps={{
                     shrink: true,
                   }}
@@ -532,6 +570,10 @@ export default function StudentDetailsForm({ colorMode, menteeId, isAdminEdit })
                   label="Blood Group"
                   fullWidth
                   autoComplete="off"
+                  disabled={!isEditable}
+                  InputProps={{
+                    readOnly: !isEditable,
+                  }}
                   InputLabelProps={{
                     shrink: shouldShrink("studentProfile.bloodGroup"),
                   }}
@@ -545,6 +587,10 @@ export default function StudentDetailsForm({ colorMode, menteeId, isAdminEdit })
                   fullWidth
                   required={!isDataFetched}
                   autoComplete="tel"
+                  disabled={!isEditable}
+                  InputProps={{
+                    readOnly: !isEditable,
+                  }}
                   InputLabelProps={{
                     shrink: shouldShrink("studentProfile.mobileNumber"),
                   }}
@@ -557,6 +603,10 @@ export default function StudentDetailsForm({ colorMode, menteeId, isAdminEdit })
                   type="tel"
                   fullWidth
                   autoComplete="tel"
+                  disabled={!isEditable}
+                  InputProps={{
+                    readOnly: !isEditable,
+                  }}
                   InputLabelProps={{
                     shrink: shouldShrink("studentProfile.alternatePhoneNumber"),
                   }}
@@ -569,6 +619,10 @@ export default function StudentDetailsForm({ colorMode, menteeId, isAdminEdit })
                   fullWidth
                   required={!isDataFetched}
                   autoComplete="off"
+                  disabled={!isEditable}
+                  InputProps={{
+                    readOnly: !isEditable,
+                  }}
                   InputLabelProps={{
                     shrink: shouldShrink("studentProfile.nationality"),
                   }}
@@ -586,6 +640,10 @@ export default function StudentDetailsForm({ colorMode, menteeId, isAdminEdit })
                   label="Domicile"
                   fullWidth
                   autoComplete="off"
+                  disabled={!isEditable}
+                  InputProps={{
+                    readOnly: !isEditable,
+                  }}
                   InputLabelProps={{
                     shrink: shouldShrink("studentProfile.domicile"),
                   }}
@@ -597,6 +655,10 @@ export default function StudentDetailsForm({ colorMode, menteeId, isAdminEdit })
                   label="Category"
                   fullWidth
                   autoComplete="off"
+                  disabled={!isEditable}
+                  InputProps={{
+                    readOnly: !isEditable,
+                  }}
                   InputLabelProps={{
                     shrink: shouldShrink("studentProfile.category"),
                   }}
@@ -608,6 +670,10 @@ export default function StudentDetailsForm({ colorMode, menteeId, isAdminEdit })
                   label="Caste"
                   fullWidth
                   autoComplete="off"
+                  disabled={!isEditable}
+                  InputProps={{
+                    readOnly: !isEditable,
+                  }}
                   InputLabelProps={{
                     shrink: shouldShrink("studentProfile.caste"),
                   }}
@@ -620,6 +686,10 @@ export default function StudentDetailsForm({ colorMode, menteeId, isAdminEdit })
                   fullWidth
                   required={!isDataFetched}
                   autoComplete="off"
+                  disabled={!isEditable}
+                  InputProps={{
+                    readOnly: !isEditable,
+                  }}
                   InputLabelProps={{
                     shrink: shouldShrink("studentProfile.aadharCardNumber"),
                   }}
@@ -632,6 +702,10 @@ export default function StudentDetailsForm({ colorMode, menteeId, isAdminEdit })
                   type="date"
                   fullWidth
                   required={!isDataFetched}
+                  disabled={!isEditable}
+                  InputProps={{
+                    readOnly: !isEditable,
+                  }}
                   InputLabelProps={{
                     shrink: true,
                   }}
@@ -644,6 +718,10 @@ export default function StudentDetailsForm({ colorMode, menteeId, isAdminEdit })
                   fullWidth
                   required={!isDataFetched}
                   autoComplete="off"
+                  disabled={!isEditable}
+                  InputProps={{
+                    readOnly: !isEditable,
+                  }}
                   InputLabelProps={{
                     shrink: true,
                   }}
@@ -662,6 +740,10 @@ export default function StudentDetailsForm({ colorMode, menteeId, isAdminEdit })
                   fullWidth
                   required={!isDataFetched}
                   autoComplete="off"
+                  disabled={!isEditable}
+                  InputProps={{
+                    readOnly: !isEditable,
+                  }}
                   InputLabelProps={{
                     shrink: true,
                   }}
@@ -677,18 +759,20 @@ export default function StudentDetailsForm({ colorMode, menteeId, isAdminEdit })
 
             <Stack spacing={3} alignItems="flex-end" sx={{ mt: 3 }}>
               <Box display="flex" gap={1}>
-                {import.meta.env.MODE === "development" && (
+                {import.meta.env.MODE === "development" && isEditable && (
                   <LoadingButton variant="outlined" onClick={handleReset}>
                     Reset
                   </LoadingButton>
                 )}
-                <LoadingButton
-                  type="submit"
-                  variant="contained"
-                  loading={isSubmitting}
-                >
-                  Save Changes
-                </LoadingButton>
+                {isEditable && (
+                  <LoadingButton
+                    type="submit"
+                    variant="contained"
+                    loading={isSubmitting}
+                  >
+                    Save Changes
+                  </LoadingButton>
+                )}
               </Box>
             </Stack>
           </Card>

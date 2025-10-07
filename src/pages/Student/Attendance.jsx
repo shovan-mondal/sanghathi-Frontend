@@ -143,23 +143,26 @@ const Attendance = () => {
 
         // Get all subjects from all months in the selected semester
         const allSubjects = semesterData.months.flatMap(monthData => monthData.subjects);
-        
-        // Create a Map to store unique subjects by subjectCode
+
+        // Create a Map to store unique subjects by subjectCode or subjectName
         const uniqueSubjects = new Map();
-        
-        // Process all subjects, keeping only the most recent entry for each subjectCode
+
         allSubjects.forEach(subject => {
-            if (subject.subjectCode) {
-                uniqueSubjects.set(subject.subjectCode, {
-                    subjectCode: subject.subjectCode,
+            // Use subjectCode if present, else use subjectName as key
+            const key = subject.subjectCode && subject.subjectCode.trim() !== ""
+                ? `${subject.subjectCode}-${subject.subjectName}`
+                : subject.subjectName;
+            if (key && !uniqueSubjects.has(key)) {
+                uniqueSubjects.set(key, {
+                    subjectCode: subject.subjectCode || "",
                     subjectName: subject.subjectName
                 });
             }
         });
 
-        // Convert Map to array and sort by subjectCode
+        // Convert Map to array and sort by subjectName
         return Array.from(uniqueSubjects.values())
-            .sort((a, b) => a.subjectCode.localeCompare(b.subjectCode));
+            .sort((a, b) => a.subjectName.localeCompare(b.subjectName));
     };
 
   return (
@@ -201,9 +204,7 @@ const Attendance = () => {
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell sx={{ border: "1px solid gray" }}>
-                Subject Code
-              </TableCell>
+              {/* Removed Subject Code column */}
               <TableCell sx={{ border: "1px solid gray" }}>
                 Subject Name
               </TableCell>
@@ -217,23 +218,21 @@ const Attendance = () => {
           </TableHead>
           <TableBody>
             {getSubjectsForSemester().map((subject) => (
-                <TableRow key={subject.subjectCode}>
-                  <TableCell sx={{ border: "1px solid gray" }}>
-                    {subject.subjectCode}
-                  </TableCell>
-                  <TableCell sx={{ border: "1px solid gray" }}>
-                    {subject.subjectName}
-                  </TableCell>
-                  <TableCell sx={{ border: "1px solid gray" }}>
-                    {getMonthAttendance(subject.subjectName, selectedSemester, selectedMonth)}
-                  </TableCell>
-                  <TableCell sx={{ border: "1px solid gray" }}>
-                    {getCumulativeAttendance(subject.subjectName, selectedSemester)}
-                  </TableCell>
-                </TableRow>
-              ))}
+              <TableRow key={subject.subjectName}>
+                {/* Removed Subject Code cell */}
+                <TableCell sx={{ border: "1px solid gray" }}>
+                  {subject.subjectName}
+                </TableCell>
+                <TableCell sx={{ border: "1px solid gray" }}>
+                  {getMonthAttendance(subject.subjectName, selectedSemester, selectedMonth)}
+                </TableCell>
+                <TableCell sx={{ border: "1px solid gray" }}>
+                  {getCumulativeAttendance(subject.subjectName, selectedSemester)}
+                </TableCell>
+              </TableRow>
+            ))}
             <TableRow sx={{ fontWeight: "bold" }}>
-              <TableCell colSpan={2}>Overall Attendance</TableCell>
+              <TableCell colSpan={1}>Overall Attendance</TableCell>
               <TableCell>
                 {getOverallAttendance(selectedSemester)}
                 <Box component="span" sx={{ ml: 1 }}>

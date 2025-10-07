@@ -17,13 +17,13 @@ import Hobbies from "./Hobbies";
 
 
 export default function CareerReview() {
-  const { currentTab, onChangeTab } = useTabs("Career Counselling");
+  const { currentTab, onChangeTab } = useTabs("Career Plan");
   const theme = useTheme();
   const isLight = theme.palette.mode === 'light';
   
   const ACCOUNT_TABS = [
     {
-      value: "Career Counselling",
+      value: "Career Plan",
       icon: <Iconify icon={"ic:round-account-box"} width={20} height={20} />,
       component: <CareerCounselling/>,
     },

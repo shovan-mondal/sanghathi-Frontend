@@ -44,6 +44,10 @@ import TYLScorecard from "./pages/Student/TYLScorecard";
 import MyChatBot from "./mychatbot";
 import { useLocation } from 'react-router-dom';
 import { initGA, trackPageView } from "./ga";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword   from "./pages/ResetPassword";
+import FeedbackForm from "./pages/Feedback/feedback";
+
 // TODO : Need to remove routing logic from app component
 function App() {
   // Track page views on route change using Google Analytics GA4
@@ -66,11 +70,19 @@ function App() {
           <div className="app">
             <main className="content">
               <Routes>
+                <Route path="/signup" element={<Signup />} />
                 <Route
                   path="/login"
                   element={user ? <Navigate replace to="/" /> : <Login />}
                 />
-                <Route path="/signup" element={<Signup />} />
+                <Route
+                  path="/forgotPassword"
+                  element={<ForgotPassword />}
+                />
+                <Route 
+                path="/resetPassword/:token" 
+                element={<ResetPassword />} 
+                />
 
                 <Route element={<DashboardLayout />}>
                   <Route
@@ -327,7 +339,16 @@ function App() {
                       </ProtectedRouteWrapper>
                     }
                   />
+                  <Route
+                    path="/feedback"
+                    element={
+                      <ProtectedRouteWrapper>
+                        <LazyLoadWrapper component={FeedbackForm} />
+                      </ProtectedRouteWrapper>
+                    }
+                  />
                 </Route>
+                
               </Routes>
             </main>
           </div>

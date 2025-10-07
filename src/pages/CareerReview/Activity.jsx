@@ -15,6 +15,13 @@ export default function Activity() {
 
   const { enqueueSnackbar } = useSnackbar();
     const { user } = useContext(AuthContext);
+    
+    // Check if the current user is faculty
+    const isFaculty = user?.roleName === "faculty";
+    
+    // Fields should be editable only if user is not faculty
+    const isEditable = !isFaculty;
+    
     console.log("User : ",user);
     console.log("id: ",menteeId);
     const methods = useForm({
@@ -81,6 +88,13 @@ export default function Activity() {
 
 return (
     <FormProvider methods={methods} onSubmit={handleSubmit(onSubmit)}>
+      {isFaculty && (
+        <Box sx={{ mb: 2, p: 2, bgcolor: 'warning.light', borderRadius: 1 }}>
+          <Typography variant="body2" color="warning.dark">
+            You are viewing this student profile in read-only mode. Only students can edit their own profiles.
+          </Typography>
+        </Box>
+      )}
           <Card sx={{ p: 3 }}>
             <Typography variant="h6" gutterBottom>
             Event Participation Record in Sports, Cultural, Societal, etc by the Student
@@ -107,6 +121,10 @@ return (
                     name={`activity[${index}].eventType`} 
                     label="Event Type"
                     fullWidth
+                    disabled={!isEditable}
+                    InputProps={{
+                      readOnly: !isEditable,
+                    }}
                   />
                   </Grid>
                   <Grid item xs={3}>
@@ -114,6 +132,10 @@ return (
                     name={`activity[${index}].eventTitle`} 
                     label="Event Title"
                     fullWidth
+                    disabled={!isEditable}
+                    InputProps={{
+                      readOnly: !isEditable,
+                    }}
                   />
                   </Grid>
                   <Grid item xs={3}>
@@ -121,6 +143,10 @@ return (
                     name={`activity[${index}].description`} 
                     label="Description"
                     fullWidth
+                    disabled={!isEditable}
+                    InputProps={{
+                      readOnly: !isEditable,
+                    }}
                   />
                   </Grid>
                   <Grid item xs={2}>
@@ -130,36 +156,46 @@ return (
                     type="date"
                     InputLabelProps={{ shrink: true }}
                     fullWidth
+                    disabled={!isEditable}
+                    InputProps={{
+                      readOnly: !isEditable,
+                    }}
                   />
                   </Grid>
                   <Grid item xs={1}>
-                    <IconButton color="error" onClick={() => remove(index)} sx={{ mt: 1 }}>
-                      <DeleteIcon />
-                    </IconButton>
+                    {isEditable && (
+                      <IconButton color="error" onClick={() => remove(index)} sx={{ mt: 1 }}>
+                        <DeleteIcon />
+                      </IconButton>
+                    )}
                   </Grid>
                 </Grid>
               ))}
                 <Grid item xs={12}>
-                  <Button 
-                    variant="contained" 
-                    onClick={() => append({ eventType: "", eventTitle: "", description: "", eventDate: "" })} 
-                    sx={{ mt: 2, display: "block", mx: "auto" }}>
-                    Add Activity
-                  </Button>
+                  {isEditable && (
+                    <Button 
+                      variant="contained" 
+                      onClick={() => append({ eventType: "", eventTitle: "", description: "", eventDate: "" })} 
+                      sx={{ mt: 2, display: "block", mx: "auto" }}>
+                      Add Activity
+                    </Button>
+                  )}
                 </Grid>
         <Grid item xs={12}>
             <Stack direction="row" spacing={2} justifyContent="flex-end">
               <Box display="flex" gap={1}>
-                {import.meta.env.MODE === "development" && (
+                {import.meta.env.MODE === "development" && isEditable && (
                   <LoadingButton 
                   variant="outlined" 
                   onClick={handleReset}>
                     Reset
                   </LoadingButton>
                 )}
-                <LoadingButton type="submit" variant="contained" loading={isSubmitting}>
-                  Save
-                </LoadingButton>
+                {isEditable && (
+                  <LoadingButton type="submit" variant="contained" loading={isSubmitting}>
+                    Save
+                  </LoadingButton>
+                )}
               </Box>
             </Stack>
         </Grid>
