@@ -28,20 +28,10 @@ const DEFAULT_VALUES = {
   motherOfficeAddress: "",
   fatherAnnualIncome: "",
   motherAnnualIncome: "",
+  fatherPhoneNumber: "",
   fatherOfficePhone: "",
+  motherPhoneNumber: "",
   motherOfficePhone: "",
-  fatherResidencePhone: "",
-  motherResidencePhone: "",
-  fatherEmail: "",
-  motherEmail: "",
-  mobileNumber: "",
-  residenceAddress: "",
-  fax: "",
-  district: "",
-  taluka: "",
-  village: "",
-  state: "",
-  pincode: "",
 };
 
 export default function ParentsDetails() {
@@ -59,7 +49,6 @@ export default function ParentsDetails() {
     handleSubmit,
     reset,
     formState: { isSubmitting },
-    setValue,
   } = methods;
 
   const fetchParentDetails = useCallback(async () => {
@@ -71,60 +60,36 @@ export default function ParentsDetails() {
       }
       
       const response = await api.get(`/parent-details/${userId}`);
-      console.log("Parent details full response:", response);
-      console.log("Parent details response.data:", response.data);
+      console.log("Full API response:", response);
       
-      // Extract parent details - check multiple possible response structures
       let parentDetails = null;
       
       if (response.data?.data?.parentDetails) {
         parentDetails = response.data.data.parentDetails;
-        console.log("Found data in response.data.data.parentDetails");
-      } else if (response.data?.parentDetails) {
-        parentDetails = response.data.parentDetails;
-        console.log("Found data in response.data.parentDetails");
-      } else if (response.data?.data) {
-        parentDetails = response.data.data;
-        console.log("Found data in response.data.data");
+        console.log("Found parent details:", parentDetails);
       } else {
-        parentDetails = response.data;
-        console.log("Using data directly from response.data");
+        console.log("No parent details found or different response structure");
+        return;
       }
       
-      console.log("Extracted parent details:", parentDetails);
-      
       if (parentDetails) {
-        // Use all keys from DEFAULT_VALUES to ensure we're not missing any fields
-        Object.keys(DEFAULT_VALUES).forEach((key) => {
-          if (parentDetails[key] !== undefined) {
-            console.log(`Setting field ${key} to value: ${parentDetails[key]}`);
-            setValue(key, parentDetails[key] || "");
-          }
+        const formData = {};
+        Object.keys(DEFAULT_VALUES).forEach(key => {
+          formData[key] = parentDetails[key] || "";
         });
         
-        // If the parentDetails object format exactly matches our form, use reset for a complete update
-        if (typeof parentDetails === 'object' && 
-            Object.keys(parentDetails).length > 0 && 
-            Object.keys(parentDetails).every(key => DEFAULT_VALUES.hasOwnProperty(key) || 
-                                              ['_id', 'id', '_v', '__v', 'createdAt', 'updatedAt', 'userId'].includes(key))) {
-          console.log("Setting all form values at once with reset()");
-          // Filter out non-form fields
-          const formData = {};
-          Object.keys(DEFAULT_VALUES).forEach(key => {
-            formData[key] = parentDetails[key] || "";
-          });
-          reset(formData);
-        }
+        console.log("Setting form data:", formData);
+        reset(formData);
       }
     } catch (error) {
       console.error("Error fetching parent details:", error);
-      // if (error.response?.status !== 404) {
-      //   enqueueSnackbar("Error fetching parent details", { variant: "error" });
-      // }
+      if (error.response?.status !== 404) {
+        enqueueSnackbar("Error fetching parent details", { variant: "error" });
+      }
     } finally {
       setIsDataFetched(true);
     }
-  }, [user?._id, menteeId, setValue, reset, enqueueSnackbar]);
+  }, [user?._id, menteeId, reset, enqueueSnackbar]);
 
   useEffect(() => {
     fetchParentDetails();
@@ -172,8 +137,6 @@ export default function ParentsDetails() {
                 </Box>
               ) : (
                 <>
-                  
-                  
                   <Grid container spacing={3}>
                     <Grid item xs={12} md={4}>
                       <RHFTextField
@@ -248,10 +211,15 @@ export default function ParentsDetails() {
                       fullWidth
                     />
                     <RHFTextField
-                      name="fatherOfficePhone"
-                      label="Father's Office Phone No."
+                      name="fatherPhoneNumber"
+                      label="Father's Phone Number"
                       fullWidth
                       required
+                    />
+                    <RHFTextField
+                      name="fatherOfficePhone"
+                      label="Father's Office Phone"
+                      fullWidth
                     />
                     <RHFTextField
                       name="fatherOfficeAddress"
@@ -287,10 +255,15 @@ export default function ParentsDetails() {
                       fullWidth
                     />
                     <RHFTextField
-                      name="motherOfficePhone"
-                      label="Mother's Phone No."
+                      name="motherPhoneNumber"
+                      label="Mother's Phone Number"
                       fullWidth
                       required
+                    />
+                    <RHFTextField
+                      name="motherOfficePhone"
+                      label="Mother's Office Phone"
+                      fullWidth
                     />
                     <RHFTextField
                       name="motherOfficeAddress"

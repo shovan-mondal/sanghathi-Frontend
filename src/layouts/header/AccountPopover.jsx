@@ -30,15 +30,19 @@ export default function AccountPopover() {
   const studentlink = "/student/profile";
   const facultylink = "/faculty/FacultyProfile";
   const adminlink = "/admin/dashboard";
+  const hodlink = "/hod/dashboard";
 
   const getprofileconfig = (role) => {
     switch (role) {
       case "admin":
         return adminlink;
+        case "hod":
+        return hodlink;
       case "faculty":
         return facultylink;
       case "student":
         return studentlink;
+      
       default:
         return null;
     }

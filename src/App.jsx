@@ -26,6 +26,7 @@ import Thread from "./pages/Thread/Thread";
 import ThreadWindow from "./pages/Thread/ThreadWindow";
 import Report from "./pages/Report/Report";
 import AdminDashboard from "./pages/Admin/AdminDashboard";
+import HodDashboard from "./pages/Hod/HodDashboard";
 import ViewUsers from "./pages/Admin/ViewUsers";
 import Data from "./pages/Admin/Data";
 import FacultyDashboard from "./pages/Faculty/FacultyDashboard";
@@ -113,6 +114,14 @@ function App() {
                     element={
                       <ProtectedRouteWrapper allowedRoles={["admin"]}>
                         <LazyLoadWrapper component={AdminDashboard} />
+                      </ProtectedRouteWrapper>
+                    }
+                  />
+                  <Route
+                    path="/hod/dashboard"
+                    element={
+                      <ProtectedRouteWrapper allowedRoles={["hod"]}>
+                        <LazyLoadWrapper component={HodDashboard} />
                       </ProtectedRouteWrapper>
                     }
                   />
