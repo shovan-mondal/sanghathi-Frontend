@@ -160,11 +160,11 @@ function App() {
                     path="/hod/mentors"
                     element={
                       <ProtectedRouteWrapper allowedRoles={["hod"]}>
-                        <LazyLoadWrapper component={HodViewMentors} />
+                        <LazyLoadWrapper component={DirectorViewMentors} />
                       </ProtectedRouteWrapper>
                     }
                   />
-                  <Route
+                  {/* <Route
                     path="/hod/mentor/:mentorId/mentees"
                     element={
                       <ProtectedRouteWrapper allowedRoles={["hod"]}>
@@ -187,7 +187,7 @@ function App() {
                         <LazyLoadWrapper component={StudentDashboard} />
                       </ProtectedRouteWrapper>
                     }
-                  />
+                  /> */}
                   <Route
                     path="/director/mentors"
                     element={
@@ -199,7 +199,7 @@ function App() {
                   <Route
                     path="/director/mentor/:mentorId/mentees"
                     element={
-                      <ProtectedRouteWrapper allowedRoles={["director"]}>
+                      <ProtectedRouteWrapper allowedRoles={["director","hod"]}>
                         <LazyLoadWrapper component={DirectorMenteesList} />
                       </ProtectedRouteWrapper>
                     }
@@ -207,7 +207,7 @@ function App() {
                   <Route
                     path="/director/mentee-profile/:menteeId"
                     element={
-                      <ProtectedRouteWrapper allowedRoles={["director"]}>
+                      <ProtectedRouteWrapper allowedRoles={["director","hod"]}>
                         <LazyLoadWrapper component={StudentDashboard} />
                       </ProtectedRouteWrapper>
                     }
