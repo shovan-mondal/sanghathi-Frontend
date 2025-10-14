@@ -26,6 +26,13 @@ import Thread from "./pages/Thread/Thread";
 import ThreadWindow from "./pages/Thread/ThreadWindow";
 import Report from "./pages/Report/Report";
 import AdminDashboard from "./pages/Admin/AdminDashboard";
+import DirectorDashboard from "./pages/Director/DirectorDashboard";
+import DirectorViewMentors from "./pages/Director/DirectorViewMentors";
+import DirectorMenteesList from "./pages/Director/DirectorMenteesList";
+import HodDashboard from "./pages/Hod/HodDashboard";
+import HodViewMentors from "./pages/Hod/HodViewMentors";
+import HodMenteesList from "./pages/Hod/HodMenteesList";
+import HodMentorDashboard from "./pages/Hod/HodMentorDashboard";
 import ViewUsers from "./pages/Admin/ViewUsers";
 import Data from "./pages/Admin/Data";
 import FacultyDashboard from "./pages/Faculty/FacultyDashboard";
@@ -47,8 +54,8 @@ import { initGA, trackPageView } from "./ga";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword   from "./pages/ResetPassword";
 import FeedbackForm from "./pages/Feedback/feedback";
-import ComplaintForm from "./pages/Complain/Complaint";
 
+import FeedbackTable from "./pages/Feedback/feedback";
 // TODO : Need to remove routing logic from app component
 function App() {
   // Track page views on route change using Google Analytics GA4
@@ -94,7 +101,11 @@ function App() {
                           <Navigate replace to="/faculty/dashboard" />
                         ) : user.roleName === "admin" ? (
                           <Navigate replace to="/admin/dashboard" />
-                        ) : (
+                        ) : user.roleName === "director" ? (
+                          <Navigate replace to="/director/dashboard" />
+                        ) : user.roleName === "hod" ? (
+                          <Navigate replace to="/hod/dashboard" />
+                        ): (
                           <ProtectedRouteWrapper allowedRoles={["student"]}>
                             <LazyLoadWrapper component={Dashboard} />
                           </ProtectedRouteWrapper>
@@ -130,6 +141,78 @@ function App() {
                     }
                   />
                   <Route
+                    path="/director/dashboard"
+                    element={
+                      <ProtectedRouteWrapper allowedRoles={["director"]}>
+                        <LazyLoadWrapper component={DirectorDashboard} />
+                      </ProtectedRouteWrapper>
+                    }
+                  />
+                  <Route
+                    path="/hod/dashboard"
+                    element={
+                      <ProtectedRouteWrapper allowedRoles={["hod"]}>
+                        <LazyLoadWrapper component={HodDashboard} />
+                      </ProtectedRouteWrapper>
+                    }
+                  />
+                  <Route
+                    path="/hod/mentors"
+                    element={
+                      <ProtectedRouteWrapper allowedRoles={["hod"]}>
+                        <LazyLoadWrapper component={DirectorViewMentors} />
+                      </ProtectedRouteWrapper>
+                    }
+                  />
+                  {/* <Route
+                    path="/hod/mentor/:mentorId/mentees"
+                    element={
+                      <ProtectedRouteWrapper allowedRoles={["hod"]}>
+                        <LazyLoadWrapper component={HodMenteesList} />
+                      </ProtectedRouteWrapper>
+                    }
+                  />
+                  <Route
+                    path="/hod/mentor-dashboard/:mentorId"
+                    element={
+                      <ProtectedRouteWrapper allowedRoles={["hod"]}>
+                        <LazyLoadWrapper component={HodMentorDashboard} />
+                      </ProtectedRouteWrapper>
+                    }
+                  />
+                  <Route
+                    path="/hod/mentee-profile/:menteeId"
+                    element={
+                      <ProtectedRouteWrapper allowedRoles={["hod"]}>
+                        <LazyLoadWrapper component={StudentDashboard} />
+                      </ProtectedRouteWrapper>
+                    }
+                  /> */}
+                  <Route
+                    path="/director/mentors"
+                    element={
+                      <ProtectedRouteWrapper allowedRoles={["director"]}>
+                        <LazyLoadWrapper component={DirectorViewMentors} />
+                      </ProtectedRouteWrapper>
+                    }
+                  />
+                  <Route
+                    path="/director/mentor/:mentorId/mentees"
+                    element={
+                      <ProtectedRouteWrapper allowedRoles={["director","hod"]}>
+                        <LazyLoadWrapper component={DirectorMenteesList} />
+                      </ProtectedRouteWrapper>
+                    }
+                  />
+                  <Route
+                    path="/director/mentee-profile/:menteeId"
+                    element={
+                      <ProtectedRouteWrapper allowedRoles={["director","hod"]}>
+                        <LazyLoadWrapper component={StudentDashboard} />
+                      </ProtectedRouteWrapper>
+                    }
+                  />
+                  <Route
                     path="/admin/add-user"
                     element={
                       <ProtectedRouteWrapper>
@@ -139,6 +222,14 @@ function App() {
                   />
                   <Route
                     path="/admin/users"
+                    element={
+                      <ProtectedRouteWrapper>
+                        <LazyLoadWrapper component={ViewUsers} />
+                      </ProtectedRouteWrapper>
+                    }
+                  />
+                  <Route
+                    path="/director/users"
                     element={
                       <ProtectedRouteWrapper>
                         <LazyLoadWrapper component={ViewUsers} />
@@ -348,15 +439,16 @@ function App() {
                       </ProtectedRouteWrapper>
                     }
                   />
+                  <Route
+                    path="/feedbackpage"
+                    element={
+                      <ProtectedRouteWrapper>
+                        <LazyLoadWrapper component={FeedbackTable} />
+                      </ProtectedRouteWrapper>
+                    }
+                  />
                 </Route>
-                <Route
-                  path="/Complain"
-                  element={
-                    <ProtectedRouteWrapper>
-                      <LazyLoadWrapper component={ComplaintForm} />
-                    </ProtectedRouteWrapper>
-                  }
-                />
+                
               </Routes>
             </main>
           </div>
