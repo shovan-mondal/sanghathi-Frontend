@@ -58,24 +58,18 @@ const AddAttendance = () => {
 
 
   const downloadTemplate = () => {
-    // Example with 5 subjects, but can be extended
     const headers = [
-      "USN", "SEM", "MONTH",
-      "SUBJECT 1", "SCHEDULED 1", "ATTENDED 1",
-      "SUBJECT 2", "SCHEDULED 2", "ATTENDED 2",
-      "SUBJECT 3", "SCHEDULED 3", "ATTENDED 3",
-      "SUBJECT 4", "SCHEDULED 4", "ATTENDED 4",
-      "SUBJECT 5", "SCHEDULED 5", "ATTENDED 5"
+      "USN",
+      "Sem",
+      "Month",
+      "Mathematics Code",
+      "Mathematics",
+      "Mathematics Total",
+      "Science Code",
+      "Science",
+      "Science Total",
     ];
-    const exampleRow = [
-      "1CR23IS000", "2", "May",
-      "Mathematics", "40", "38",
-      "Physics", "35", "30",
-      "Chemistry", "30", "28",
-      "English", "25", "25",
-      "Biology", "20", "18"
-    ];
-    const csvContent = Papa.unparse([headers, exampleRow], { quotes: true });
+    const csvContent = Papa.unparse([headers], { quotes: true });
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
     const link = document.createElement("a");
     const url = URL.createObjectURL(blob);
@@ -122,76 +116,94 @@ const AddAttendance = () => {
 
     for (const [index, row] of rows.entries()) {
       try {
-        if (!row.USN || !row.SEM || !row.MONTH) {
-          throw new Error("Missing required fields (USN, SEM, MONTH)");
+        console.log(`Processing row ${index + 1}:`, row);
+        
+        // Trim all values and check for required fields
+        const usn = row.USN?.toString().trim();
+        const sem = row.Sem?.toString().trim();
+        const month = row.Month?.toString().trim();
+        
+        if (!usn) {
+          throw new Error("Missing USN");
+        }
+        if (!sem) {
+          throw new Error("Missing Sem (Semester)");
+        }
+        if (!month) {
+          throw new Error("Missing Month");
         }
 
         // Convert month name to number using case-insensitive matching
-        const monthValue = getMonthValue(row.MONTH);
+        const monthValue = getMonthValue(month);
         if (monthValue === undefined) {
-          throw new Error(`Invalid month: ${row.MONTH}. Use month names like January, Jan, February, Feb, etc.`);
+          throw new Error(`Invalid month: ${month}. Use month names like January, Jan, February, Feb, etc.`);
         }
 
-        // Dynamically extract subjects
         const subjects = [];
-        // Get all keys except USN, SEM, MONTH
-        const keys = Object.keys(row).filter(
-          (key) => !["USN", "SEM", "MONTH"].includes(key)
+        const headers = Object.keys(row).filter(
+          (key) => key !== "USN" && key !== "Sem" && key !== "Month"
         );
-        // Subjects are in groups of 3: SUBJECT, SCHEDULED, ATTENDED
-        for (let i = 0; i < keys.length; i += 3) {
-          const subjectNameKey = keys[i];
-          const scheduledKey = keys[i + 1];
-          const attendedKey = keys[i + 2];
-          const subjectName = row[subjectNameKey];
-          const scheduled = row[scheduledKey];
-          const attended = row[attendedKey];
-          if (!subjectName || subjectName.trim() === "") continue;
-          // If all three are empty, skip
-          if (
-            (!subjectName || subjectName.trim() === "") &&
-            (!scheduled || scheduled.trim() === "") &&
-            (!attended || attended.trim() === "")
-          ) {
-            continue;
+
+        // Process subjects in groups of 3 (code, name, total)
+        for (let i = 0; i < headers.length; i += 3) {
+          const subjectCodeHeader = headers[i];
+          const subjectHeader = headers[i + 1];
+          const totalHeader = headers[i + 2];
+          
+          if (!totalHeader || !totalHeader.endsWith(" Total")) {
+            throw new Error(`Invalid subject columns at ${subjectHeader}`);
           }
-          // If scheduled or attended is missing, treat as 0
+          
+          const subjectName = subjectHeader.replace(" Total", "");
+          const subjectCode = row[subjectCodeHeader]?.toString().trim();
+          const attended = parseInt(row[subjectHeader], 10);
+          const total = parseInt(row[totalHeader], 10);
+          
+          if (!subjectCode) {
+            throw new Error(`Missing subject code for ${subjectName}`);
+          }
+          
+          if (isNaN(attended) || isNaN(total)) {
+            throw new Error(`Invalid numbers for ${subjectName}`);
+          }
+          
           subjects.push({
-            subjectName: subjectName.trim(),
-            totalClasses: scheduled ? parseInt(scheduled, 10) : 0,
-            attendedClasses: attended ? parseInt(attended, 10) : 0,
+            subjectCode,
+            subjectName,
+            attendedClasses: attended,
+            totalClasses: total,
           });
         }
 
-        if (subjects.length === 0) {
-          throw new Error("No subject data found for this row.");
-        }
-
-        const response = await axios.get(`${BASE_URL}/users/usn/${row.USN}`);
+        const response = await axios.get(`${BASE_URL}/users/usn/${usn}`);
+        console.log("User lookup response: ", response);
         if (!response.data?.userId) {
-          throw new Error(`User with USN ${row.USN} not found`);
+          throw new Error(`User not found`);
         }
         const userId = response.data.userId;
+        console.log("UserId: ", userId);
 
         const attendanceData = {
-          semester: isNaN(row.SEM) ? row.SEM : parseInt(row.SEM, 10),
+          semester: parseInt(sem, 10),
           month: monthValue,
           subjects,
         };
+        console.log("Attendance Data to send: ", attendanceData);
 
         try {
           await axios.post(`${BASE_URL}/students/attendance/${userId}`, attendanceData);
           success++;
         } catch (postError) {
-          const errorMessage = postError.response?.data?.message ||
-            postError.response?.data?.error ||
-            postError.message ||
-            'Unknown error occurred';
+          console.error("Post error details:", postError.response?.data);
+          const errorMessage = postError.response?.data?.message || 
+                             postError.response?.data?.error || 
+                             postError.message || 
+                             'Unknown error occurred';
           throw new Error(`Failed to save attendance: ${errorMessage}`);
         }
       } catch (error) {
         errors++;
-        newErrors.push(`Row ${index + 1}: ${error.message}`);
+        newErrors.push(`USN: ${row.USN || 'Unknown'} - ${error.message}`);
         console.error(`Error processing row ${index + 1}:`, error);
       }
     }

@@ -1,3 +1,4 @@
+import QuestionAnswerIcon from "@mui/icons-material/QuestionAnswer";
 import { Container, Grid, Typography, Box, useTheme, Paper } from "@mui/material";
 import Page from "../../components/Page";
 import { Card, CardHeader, CardContent, CardActionArea } from "@mui/material";
@@ -406,6 +407,21 @@ const StudentDashboard = () => {
                 icon={<AssignmentIcon />}
                 link="/student/tyl-scorecard"
                 menteeId={menteeId}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6} md={4}>
+              <StudentTile
+                title="Offline Mentor-Mentee Conversation"
+                icon={<QuestionAnswerIcon />}
+                link={`/faculty/mentor-mentee-conversation/${menteeId}`}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6} md={4}>
+              <StudentTile
+                title="Offline Mentor-Mentee Conversation"
+                icon={<QuestionAnswerIcon />}
+                link={`/faculty/mentor-mentee-conversation/${menteeId}`}
+                menteeId={menteeId}   // ✅ add this prop for consistency
               />
             </Grid>
           </Grid>

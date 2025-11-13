@@ -42,12 +42,6 @@ export default function ContactDetails({ userId: propUserId, colorMode }) {
   // Get userId from either prop, menteeId, or user context
   const userId = propUserId || menteeId || (user ? (user._id || user.id || user.userId) : null);
   
-  // Check if the current user is faculty
-  const isFaculty = user?.roleName === "faculty";
-  
-  // Fields should be editable only if user is not faculty
-  const isEditable = !isFaculty;
-  
   const [sameAsCurrent, setSameAsCurrent] = useState(false);
   const methods = useForm({ defaultValues: DEFAULT_VALUES });
   const { handleSubmit, reset, setValue, formState: { isSubmitting } } = methods;
@@ -145,13 +139,6 @@ export default function ContactDetails({ userId: propUserId, colorMode }) {
 
   return (
     <FormProvider methods={methods} onSubmit={handleSubmit(onSubmit)}>
-      {isFaculty && (
-        <Box sx={{ mb: 2, p: 2, bgcolor: 'warning.light', borderRadius: 1 }}>
-          <Typography variant="body2" color="warning.dark">
-            You are viewing this student profile in read-only mode. Only students can edit their own profiles.
-          </Typography>
-        </Box>
-      )}
       <Grid container spacing={2}>
         <Grid item xs={12} md={12}>
           <Typography variant="h5" gutterBottom>Contact Details</Typography>
@@ -164,17 +151,7 @@ export default function ContactDetails({ userId: propUserId, colorMode }) {
             <Stack spacing={2}>
               <Typography variant="h6">Current Address</Typography>
               {Object.keys(DEFAULT_VALUES.currentAddress).map((field) => (
-                <RHFTextField 
-                  key={field} 
-                  name={`currentAddress.${field}`} 
-                  label={field.replace(/([A-Z])/g, ' $1').trim()} 
-                  fullWidth 
-                  required 
-                  disabled={!isEditable}
-                  InputProps={{
-                    readOnly: !isEditable,
-                  }}
-                />
+                <RHFTextField key={field} name={`currentAddress.${field}`} label={field.replace(/([A-Z])/g, ' $1').trim()} fullWidth required />
               ))}
             </Stack>
           </Card>
@@ -187,28 +164,12 @@ export default function ContactDetails({ userId: propUserId, colorMode }) {
               <Box display="flex" justifyContent="space-between" alignItems="center">
                 <Typography variant="h6">Permanent Address</Typography>
                 <FormControlLabel
-                  control={
-                    <Switch 
-                      checked={sameAsCurrent} 
-                      onChange={handleSwitchChange} 
-                      disabled={!isEditable}
-                    />
-                  }
+                  control={<Switch checked={sameAsCurrent} onChange={handleSwitchChange} />}
                   label="Same as Current"
                 />
               </Box>
               {Object.keys(DEFAULT_VALUES.permanentAddress).map((field) => (
-                <RHFTextField 
-                  key={field} 
-                  name={`permanentAddress.${field}`} 
-                  label={field.replace(/([A-Z])/g, ' $1').trim()} 
-                  fullWidth 
-                  required 
-                  disabled={!isEditable}
-                  InputProps={{
-                    readOnly: !isEditable,
-                  }}
-                />
+                <RHFTextField key={field} name={`permanentAddress.${field}`} label={field.replace(/([A-Z])/g, ' $1').trim()} fullWidth required />
               ))}
             </Stack>
           </Card>
@@ -217,22 +178,12 @@ export default function ContactDetails({ userId: propUserId, colorMode }) {
         {/* Buttons */}
         <Grid item xs={12}>
           <Card sx={{ p: 3, display: "flex", justifyContent: "flex-end", gap: 2 }}>
-            <LoadingButton 
-              variant="outlined" 
-              onClick={() => reset(DEFAULT_VALUES)} 
-              disabled={isSubmitting || !isEditable}
-            >
+            <LoadingButton variant="outlined" onClick={() => reset(DEFAULT_VALUES)} disabled={isSubmitting}>
               Reset
             </LoadingButton>
-            {isEditable && (
-              <LoadingButton 
-                type="submit" 
-                variant="contained" 
-                loading={isSubmitting}
-              >
-                Save
-              </LoadingButton>
-            )}
+            <LoadingButton type="submit" variant="contained" loading={isSubmitting}>
+              Save
+            </LoadingButton>
           </Card>
         </Grid>
       </Grid>

@@ -1,4 +1,4 @@
-import { useState, useEffect, useContext } from "react";
+import { useState, useEffect, useContext, useCallback } from "react";
 import { useSearchParams } from 'react-router-dom';
 import {
   Box,
@@ -13,50 +13,62 @@ import {
 } from "@mui/material";
 import axios from "axios";
 import { AuthContext } from "../../context/AuthContext";
+import useStudentSemester from "../../hooks/useStudentSemester";
 
 const BASE_URL = import.meta.env.VITE_API_URL;
 const Attendance = () => {
   const { user } = useContext(AuthContext);
   const [searchParams] = useSearchParams();
+  const { semester: studentSemester, loading: semesterLoading } = useStudentSemester();
   const [attendanceData, setAttendanceData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [selectedSemester, setSelectedSemester] = useState(null); // Initialize to null
   const [selectedMonth, setSelectedMonth] = useState(0); // 0 for "All"
 
-  useEffect(() => {
-    const fetchAttendance = async () => {
-      try {
-        // Get menteeId from URL params if viewing as faculty
-        const menteeId = searchParams.get('menteeId') || user._id;
-        
-        console.log("Fetching attendance for ID:", menteeId); // Debug log
-        
-        const response = await axios.get(
-          `${BASE_URL}/students/attendance/${menteeId}`
-        );
-        
-        console.log("Attendance API response:", response.data); // Debug log
-        
-        const data = response.data.data.attendance;
-        if (data && data.semesters) {
-          setAttendanceData(data.semesters);
-          if (data.semesters.length > 0) {
-            setSelectedSemester(data.semesters[0].semester);
-          }
-        } else {
-          setAttendanceData([]);
-        }
-        setLoading(false);
-      } catch (err) {
-        console.error("Attendance fetch error:", err); // Debug log
-        setError("Failed to fetch attendance data");
-        setLoading(false);
-      }
-    };
+  const fetchAttendance = useCallback(async () => {
+    // Wait for semester to load before fetching
+    if (semesterLoading) {
+      return;
+    }
 
+    try {
+      // Get menteeId from URL params if viewing as faculty
+      const menteeId = searchParams.get('menteeId') || user._id;
+      
+      console.log("Fetching attendance for ID:", menteeId); // Debug log
+      
+      const response = await axios.get(
+        `${BASE_URL}/students/attendance/${menteeId}`
+      );
+      
+      console.log("Attendance API response:", response.data); // Debug log
+      
+      const data = response.data.data.attendance;
+      if (data && data.semesters) {
+        setAttendanceData(data.semesters);
+        if (data.semesters.length > 0) {
+          // Use student's current semester from profile if available and exists in data
+          const defaultSem = studentSemester && data.semesters.find(s => s.semester === studentSemester)
+            ? studentSemester
+            : data.semesters[0].semester;
+          console.log('[Attendance] Setting semester to:', defaultSem, '(studentSemester:', studentSemester, ', first available:', data.semesters[0].semester, ')');
+          setSelectedSemester(defaultSem);
+        }
+      } else {
+        setAttendanceData([]);
+      }
+      setLoading(false);
+    } catch (err) {
+      console.error("Attendance fetch error:", err); // Debug log
+      setError("Failed to fetch attendance data");
+      setLoading(false);
+    }
+  }, [semesterLoading, searchParams, user._id, studentSemester]);
+
+  useEffect(() => {
     fetchAttendance();
-  }, [user._id, searchParams]); // Add searchParams to dependencies
+  }, [fetchAttendance]);
 
   // No need for transformBackendData in the old way
 
@@ -143,26 +155,23 @@ const Attendance = () => {
 
         // Get all subjects from all months in the selected semester
         const allSubjects = semesterData.months.flatMap(monthData => monthData.subjects);
-
-        // Create a Map to store unique subjects by subjectCode or subjectName
+        
+        // Create a Map to store unique subjects by subjectCode
         const uniqueSubjects = new Map();
-
+        
+        // Process all subjects, keeping only the most recent entry for each subjectCode
         allSubjects.forEach(subject => {
-            // Use subjectCode if present, else use subjectName as key
-            const key = subject.subjectCode && subject.subjectCode.trim() !== ""
-                ? `${subject.subjectCode}-${subject.subjectName}`
-                : subject.subjectName;
-            if (key && !uniqueSubjects.has(key)) {
-                uniqueSubjects.set(key, {
-                    subjectCode: subject.subjectCode || "",
+            if (subject.subjectCode) {
+                uniqueSubjects.set(subject.subjectCode, {
+                    subjectCode: subject.subjectCode,
                     subjectName: subject.subjectName
                 });
             }
         });
 
-        // Convert Map to array and sort by subjectName
+        // Convert Map to array and sort by subjectCode
         return Array.from(uniqueSubjects.values())
-            .sort((a, b) => a.subjectName.localeCompare(b.subjectName));
+            .sort((a, b) => a.subjectCode.localeCompare(b.subjectCode));
     };
 
   return (
@@ -204,7 +213,9 @@ const Attendance = () => {
         <Table>
           <TableHead>
             <TableRow>
-              {/* Removed Subject Code column */}
+              <TableCell sx={{ border: "1px solid gray" }}>
+                Subject Code
+              </TableCell>
               <TableCell sx={{ border: "1px solid gray" }}>
                 Subject Name
               </TableCell>
@@ -218,21 +229,23 @@ const Attendance = () => {
           </TableHead>
           <TableBody>
             {getSubjectsForSemester().map((subject) => (
-              <TableRow key={subject.subjectName}>
-                {/* Removed Subject Code cell */}
-                <TableCell sx={{ border: "1px solid gray" }}>
-                  {subject.subjectName}
-                </TableCell>
-                <TableCell sx={{ border: "1px solid gray" }}>
-                  {getMonthAttendance(subject.subjectName, selectedSemester, selectedMonth)}
-                </TableCell>
-                <TableCell sx={{ border: "1px solid gray" }}>
-                  {getCumulativeAttendance(subject.subjectName, selectedSemester)}
-                </TableCell>
-              </TableRow>
-            ))}
+                <TableRow key={subject.subjectCode}>
+                  <TableCell sx={{ border: "1px solid gray" }}>
+                    {subject.subjectCode}
+                  </TableCell>
+                  <TableCell sx={{ border: "1px solid gray" }}>
+                    {subject.subjectName}
+                  </TableCell>
+                  <TableCell sx={{ border: "1px solid gray" }}>
+                    {getMonthAttendance(subject.subjectName, selectedSemester, selectedMonth)}
+                  </TableCell>
+                  <TableCell sx={{ border: "1px solid gray" }}>
+                    {getCumulativeAttendance(subject.subjectName, selectedSemester)}
+                  </TableCell>
+                </TableRow>
+              ))}
             <TableRow sx={{ fontWeight: "bold" }}>
-              <TableCell colSpan={1}>Overall Attendance</TableCell>
+              <TableCell colSpan={2}>Overall Attendance</TableCell>
               <TableCell>
                 {getOverallAttendance(selectedSemester)}
                 <Box component="span" sx={{ ml: 1 }}>

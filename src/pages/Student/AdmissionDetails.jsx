@@ -46,12 +46,6 @@ export default function AdmissionDetails() {
   const menteeId = searchParams.get("menteeId");
   const [isDataFetched, setIsDataFetched] = useState(false);
 
-  // Check if the current user is faculty
-  const isFaculty = user?.roleName === "faculty";
-  
-  // Fields should be editable only if user is not faculty
-  const isEditable = !isFaculty;
-
   const methods = useForm({
     defaultValues: DEFAULT_VALUES,
   });
@@ -153,13 +147,6 @@ export default function AdmissionDetails() {
 
   return (
     <div>
-      {isFaculty && (
-        <Box sx={{ mb: 2, p: 2, bgcolor: 'warning.light', borderRadius: 1 }}>
-          <Typography variant="body2" color="warning.dark">
-            You are viewing this student profile in read-only mode. Only students can edit their own profiles.
-          </Typography>
-        </Box>
-      )}
       <FormProvider methods={methods} onSubmit={handleSubmit(onSubmit)}>
         <Grid container spacing={2}>
           <Grid item xs={12}>
@@ -180,30 +167,9 @@ export default function AdmissionDetails() {
                   },
                 }}
               >
-                <RHFTextField 
-                  name="admissionYear" 
-                  label="Admission Year" 
-                  disabled={!isEditable}
-                  InputProps={{
-                    readOnly: !isEditable,
-                  }}
-                />
-                <RHFTextField 
-                  name="branch" 
-                  label="Branch" 
-                  disabled={!isEditable}
-                  InputProps={{
-                    readOnly: !isEditable,
-                  }}
-                />
-                <RHFSelect 
-                  name="admissionType" 
-                  label="Type of Admission"
-                  disabled={!isEditable}
-                  InputProps={{
-                    readOnly: !isEditable,
-                  }}
-                >
+                <RHFTextField name="admissionYear" label="Admission Year" />
+                <RHFTextField name="branch" label="Branch" />
+                <RHFSelect name="admissionType" label="Type of Admission">
                   <option value="" />
                   {["COMEDK", "CET", "MANAGEMENT", "SNQ"].map((option) => (
                     <option key={option} value={option}>
@@ -211,22 +177,8 @@ export default function AdmissionDetails() {
                     </option>
                   ))}
                 </RHFSelect>
-                <RHFTextField 
-                  name="category" 
-                  label="Category" 
-                  disabled={!isEditable}
-                  InputProps={{
-                    readOnly: !isEditable,
-                  }}
-                />
-                <RHFTextField 
-                  name="collegeId" 
-                  label="College ID Number" 
-                  disabled={!isEditable}
-                  InputProps={{
-                    readOnly: !isEditable,
-                  }}
-                />
+                <RHFTextField name="category" label="Category" />
+                <RHFTextField name="collegeId" label="College ID Number" />
               </Box>
 
               <Typography variant="h6" sx={{ mt: 3 }}>
@@ -245,37 +197,12 @@ export default function AdmissionDetails() {
                   },
                 }}
               >
-                <RHFTextField 
-                  name="branchChange.year" 
-                  label="Year of Change" 
-                  disabled={!isEditable}
-                  InputProps={{
-                    readOnly: !isEditable,
-                  }}
-                />
-                <RHFTextField 
-                  name="branchChange.branch" 
-                  label="New Branch" 
-                  disabled={!isEditable}
-                  InputProps={{
-                    readOnly: !isEditable,
-                  }}
-                />
-                <RHFTextField 
-                  name="branchChange.usn" 
-                  label="New USN" 
-                  disabled={!isEditable}
-                  InputProps={{
-                    readOnly: !isEditable,
-                  }}
-                />
+                <RHFTextField name="branchChange.year" label="Year of Change" />
+                <RHFTextField name="branchChange.branch" label="New Branch" />
+                <RHFTextField name="branchChange.usn" label="New USN" />
                 <RHFTextField
                   name="branchChange.collegeId"
                   label="New College ID"
-                  disabled={!isEditable}
-                  InputProps={{
-                    readOnly: !isEditable,
-                  }}
                 />
               </Box>
 
@@ -291,7 +218,6 @@ export default function AdmissionDetails() {
                       control={
                         <Checkbox
                           checked={documentsSubmitted.includes(doc)}
-                          disabled={!isEditable}
                           onChange={(e) => {
                             const checked = e.target.checked;
                             const updatedDocs = checked
@@ -310,15 +236,13 @@ export default function AdmissionDetails() {
               </FormControl>
 
               <Stack spacing={3} alignItems="flex-end" sx={{ mt: 3 }}>
-                {isEditable && (
-                  <LoadingButton
-                    type="submit"
-                    variant="contained"
-                    loading={isSubmitting}
-                  >
-                    Save Changes
-                  </LoadingButton>
-                )}
+                <LoadingButton
+                  type="submit"
+                  variant="contained"
+                  loading={isSubmitting}
+                >
+                  Save Changes
+                </LoadingButton>
               </Stack>
             </Card>
           </Grid>

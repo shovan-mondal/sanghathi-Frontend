@@ -1,4 +1,4 @@
-import { useState, useEffect, useContext } from "react";
+import { useState, useEffect, useContext, useCallback } from "react";
 import {
   Box,
   Table,
@@ -15,62 +15,74 @@ import {
 import axios from "axios";
 import { AuthContext } from "../../context/AuthContext";
 import { useSearchParams } from "react-router-dom";
+import useStudentSemester from "../../hooks/useStudentSemester";
 const BASE_URL = import.meta.env.VITE_API_URL;
 
 const Iat = () => {
   const { user } = useContext(AuthContext);
   const [searchParams] = useSearchParams();
   const menteeId = searchParams.get('menteeId');
+  const { semester: studentSemester, loading: semesterLoading } = useStudentSemester();
   
   const [iatData, setIatData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [selectedSemester, setSelectedSemester] = useState(null);
 
-  useEffect(() => {
-    const fetchIatData = async () => {
-      try {
-        // Use menteeId from URL params if available, otherwise use logged-in user ID
-        const userId = menteeId || user?._id;
-        
-        if (!userId) {
-          setError("User not authenticated or mentee ID not provided.");
-          setLoading(false);
-          return;
-        }
-        
-        console.log(`Fetching IAT marks for user ID: ${userId} (${menteeId ? 'menteeId from URL' : 'logged-in user'})`);
-        
-        //  Adapt the endpoint to your IAT data endpoint
-        const response = await axios.get(
-          `${BASE_URL}/students/iat/${userId}`, //  Replace with your actual endpoint
-          {
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem("token")}`
-            }
-          }
-        );
-        const data = response.data.data.iat; // Adjust based on your API response structure
+  const fetchIatData = useCallback(async () => {
+    // Wait for semester to load before fetching
+    if (semesterLoading) {
+      return;
+    }
 
-        if (data && data.semesters) {
-          setIatData(data.semesters);
-          if (data.semesters.length > 0) {
-            setSelectedSemester(data.semesters[0].semester);
-          }
-        } else {
-            setIatData([]);
-        }
-
+    try {
+      // Use menteeId from URL params if available, otherwise use logged-in user ID
+      const userId = menteeId || user?._id;
+      
+      if (!userId) {
+        setError("User not authenticated or mentee ID not provided.");
         setLoading(false);
-      } catch (err) {
-        setError("Failed to fetch IAT data");
-        setLoading(false);
-        console.error(err); // Log the error for debugging
+        return;
       }
-    };
+      
+      console.log(`Fetching IAT marks for user ID: ${userId} (${menteeId ? 'menteeId from URL' : 'logged-in user'})`);
+      
+      //  Adapt the endpoint to your IAT data endpoint
+      const response = await axios.get(
+        `${BASE_URL}/students/iat/${userId}`, //  Replace with your actual endpoint
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`
+          }
+        }
+      );
+      const data = response.data.data.iat; // Adjust based on your API response structure
 
+      if (data && data.semesters) {
+        setIatData(data.semesters);
+        if (data.semesters.length > 0) {
+          // Use student's current semester from profile if available and exists in data
+          const defaultSem = studentSemester && data.semesters.find(s => s.semester === studentSemester)
+            ? studentSemester
+            : data.semesters[0].semester;
+          console.log('[Iat] Setting semester to:', defaultSem, '(studentSemester:', studentSemester, ', first available:', data.semesters[0].semester, ')');
+          setSelectedSemester(defaultSem);
+        }
+      } else {
+          setIatData([]);
+      }
+
+      setLoading(false);
+    } catch (err) {
+      setError("Failed to fetch IAT data");
+      setLoading(false);
+      console.error(err); // Log the error for debugging
+    }
+  }, [semesterLoading, menteeId, user?._id, studentSemester]);
+
+  useEffect(() => {
     fetchIatData();
-  }, [user?._id, menteeId]);
+  }, [fetchIatData]);
 
   const handleSemesterChange = (event) => {
     setSelectedSemester(parseInt(event.target.value, 10));
