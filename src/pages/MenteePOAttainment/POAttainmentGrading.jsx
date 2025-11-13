@@ -1,4 +1,4 @@
-import { useState, useEffect, useContext } from "react";
+import { useState, useEffect, useContext, useCallback } from "react";
 import {
   Box,
   Table,
@@ -20,6 +20,7 @@ import { AuthContext } from "../../context/AuthContext";
 import { useSnackbar } from "notistack";
 import { useSearchParams } from "react-router-dom";
 import { useTheme } from "@mui/material/styles";
+import useStudentSemester from "../../hooks/useStudentSemester";
 
 const POAttainmentGrading = () => {
   const theme = useTheme();
@@ -27,12 +28,13 @@ const POAttainmentGrading = () => {
   const { enqueueSnackbar } = useSnackbar();
   const [searchParams] = useSearchParams();
   const menteeId = searchParams.get('menteeId');
+  const { semester: studentSemester, loading: semesterLoading } = useStudentSemester();
   const isLight = theme.palette.mode === 'light';
   const colorMode = isLight ? 'primary' : 'info';
   
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [selectedSemester, setSelectedSemester] = useState(1);
+  const [selectedSemester, setSelectedSemester] = useState(null);
   const [poAttainmentData, setPOAttainmentData] = useState({});
   const [bloomLevelData, setBloomLevelData] = useState({});
   const [semesterData, setSemesterData] = useState([]);
@@ -70,15 +72,18 @@ const POAttainmentGrading = () => {
   ];
 
   useEffect(() => {
-    fetchAllPOAttainmentData();
-  }, [menteeId, user]);
+    // Only fetch data after studentSemester has finished loading
+    if (!semesterLoading) {
+      fetchAllPOAttainmentData();
+    }
+  }, [semesterLoading, fetchAllPOAttainmentData]);
   
   useEffect(() => {
     // When semesterData or selectedSemester changes, update the current PO data
     updateCurrentSemesterData();
-  }, [semesterData, selectedSemester]);
+  }, [updateCurrentSemesterData]);
 
-  const fetchAllPOAttainmentData = async () => {
+  const fetchAllPOAttainmentData = useCallback(async () => {
     try {
       setLoading(true);
       const userId = menteeId || user._id;
@@ -88,9 +93,11 @@ const POAttainmentGrading = () => {
         // Store all semesters data
         setSemesterData(response.data.data.semesters);
         
-        // If no semester is selected and we have data, select the first one
+        // Set default semester: use student's current semester if available, otherwise first semester
         if (response.data.data.semesters.length > 0 && !selectedSemester) {
-          setSelectedSemester(response.data.data.semesters[0].semester);
+          const defaultSem = studentSemester || response.data.data.semesters[0].semester;
+          console.log('[POAttainmentGrading] Setting semester to:', defaultSem, '(studentSemester:', studentSemester, ', first available:', response.data.data.semesters[0].semester, ')');
+          setSelectedSemester(defaultSem);
         }
       } else {
         setSemesterData([]);
@@ -106,9 +113,9 @@ const POAttainmentGrading = () => {
       setError("Failed to fetch data. Using empty template.");
       setLoading(false);
     }
-  };
+  }, [menteeId, user?._id, studentSemester, selectedSemester]);
   
-  const updateCurrentSemesterData = () => {
+  const updateCurrentSemesterData = useCallback(() => {
     if (!selectedSemester || semesterData.length === 0) {
       resetToEmptyData();
       return;
@@ -123,7 +130,7 @@ const POAttainmentGrading = () => {
     } else {
       resetToEmptyData();
     }
-  };
+  }, [selectedSemester, semesterData]);
   
   const resetToEmptyData = () => {
     const emptyPOData = {};

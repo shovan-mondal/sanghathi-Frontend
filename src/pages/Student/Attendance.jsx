@@ -1,4 +1,4 @@
-import { useState, useEffect, useContext } from "react";
+import { useState, useEffect, useContext, useCallback } from "react";
 import { useSearchParams } from 'react-router-dom';
 import {
   Box,
@@ -13,50 +13,62 @@ import {
 } from "@mui/material";
 import axios from "axios";
 import { AuthContext } from "../../context/AuthContext";
+import useStudentSemester from "../../hooks/useStudentSemester";
 
 const BASE_URL = import.meta.env.VITE_API_URL;
 const Attendance = () => {
   const { user } = useContext(AuthContext);
   const [searchParams] = useSearchParams();
+  const { semester: studentSemester, loading: semesterLoading } = useStudentSemester();
   const [attendanceData, setAttendanceData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [selectedSemester, setSelectedSemester] = useState(null); // Initialize to null
   const [selectedMonth, setSelectedMonth] = useState(0); // 0 for "All"
 
-  useEffect(() => {
-    const fetchAttendance = async () => {
-      try {
-        // Get menteeId from URL params if viewing as faculty
-        const menteeId = searchParams.get('menteeId') || user._id;
-        
-        console.log("Fetching attendance for ID:", menteeId); // Debug log
-        
-        const response = await axios.get(
-          `${BASE_URL}/students/attendance/${menteeId}`
-        );
-        
-        console.log("Attendance API response:", response.data); // Debug log
-        
-        const data = response.data.data.attendance;
-        if (data && data.semesters) {
-          setAttendanceData(data.semesters);
-          if (data.semesters.length > 0) {
-            setSelectedSemester(data.semesters[0].semester);
-          }
-        } else {
-          setAttendanceData([]);
-        }
-        setLoading(false);
-      } catch (err) {
-        console.error("Attendance fetch error:", err); // Debug log
-        setError("Failed to fetch attendance data");
-        setLoading(false);
-      }
-    };
+  const fetchAttendance = useCallback(async () => {
+    // Wait for semester to load before fetching
+    if (semesterLoading) {
+      return;
+    }
 
+    try {
+      // Get menteeId from URL params if viewing as faculty
+      const menteeId = searchParams.get('menteeId') || user._id;
+      
+      console.log("Fetching attendance for ID:", menteeId); // Debug log
+      
+      const response = await axios.get(
+        `${BASE_URL}/students/attendance/${menteeId}`
+      );
+      
+      console.log("Attendance API response:", response.data); // Debug log
+      
+      const data = response.data.data.attendance;
+      if (data && data.semesters) {
+        setAttendanceData(data.semesters);
+        if (data.semesters.length > 0) {
+          // Use student's current semester from profile if available and exists in data
+          const defaultSem = studentSemester && data.semesters.find(s => s.semester === studentSemester)
+            ? studentSemester
+            : data.semesters[0].semester;
+          console.log('[Attendance] Setting semester to:', defaultSem, '(studentSemester:', studentSemester, ', first available:', data.semesters[0].semester, ')');
+          setSelectedSemester(defaultSem);
+        }
+      } else {
+        setAttendanceData([]);
+      }
+      setLoading(false);
+    } catch (err) {
+      console.error("Attendance fetch error:", err); // Debug log
+      setError("Failed to fetch attendance data");
+      setLoading(false);
+    }
+  }, [semesterLoading, searchParams, user._id, studentSemester]);
+
+  useEffect(() => {
     fetchAttendance();
-  }, [user._id, searchParams]); // Add searchParams to dependencies
+  }, [fetchAttendance]);
 
   // No need for transformBackendData in the old way
 

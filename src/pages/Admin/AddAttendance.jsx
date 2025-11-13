@@ -116,14 +116,27 @@ const AddAttendance = () => {
 
     for (const [index, row] of rows.entries()) {
       try {
-        if (!row.USN || !row.Sem || !row.Month) {
-          throw new Error("Missing required fields (USN, Sem, Month)");
+        console.log(`Processing row ${index + 1}:`, row);
+        
+        // Trim all values and check for required fields
+        const usn = row.USN?.toString().trim();
+        const sem = row.Sem?.toString().trim();
+        const month = row.Month?.toString().trim();
+        
+        if (!usn) {
+          throw new Error("Missing USN");
+        }
+        if (!sem) {
+          throw new Error("Missing Sem (Semester)");
+        }
+        if (!month) {
+          throw new Error("Missing Month");
         }
 
         // Convert month name to number using case-insensitive matching
-        const monthValue = getMonthValue(row.Month);
+        const monthValue = getMonthValue(month);
         if (monthValue === undefined) {
-          throw new Error(`Invalid month: ${row.Month}. Use month names like January, Jan, February, Feb, etc.`);
+          throw new Error(`Invalid month: ${month}. Use month names like January, Jan, February, Feb, etc.`);
         }
 
         const subjects = [];
@@ -142,7 +155,7 @@ const AddAttendance = () => {
           }
           
           const subjectName = subjectHeader.replace(" Total", "");
-          const subjectCode = row[subjectCodeHeader];
+          const subjectCode = row[subjectCodeHeader]?.toString().trim();
           const attended = parseInt(row[subjectHeader], 10);
           const total = parseInt(row[totalHeader], 10);
           
@@ -162,25 +175,26 @@ const AddAttendance = () => {
           });
         }
 
-        const response = await axios.get(`${BASE_URL}/users/usn/${row.USN}`);
-        console.log("Response: ",response);
+        const response = await axios.get(`${BASE_URL}/users/usn/${usn}`);
+        console.log("User lookup response: ", response);
         if (!response.data?.userId) {
-          throw new Error(`User with USN ${row.USN} not found`);
+          throw new Error(`User not found`);
         }
         const userId = response.data.userId;
         console.log("UserId: ", userId);
 
         const attendanceData = {
-          semester: parseInt(row.Sem, 10),
+          semester: parseInt(sem, 10),
           month: monthValue,
           subjects,
         };
-        console.log("Attendance Data: ", attendanceData);
+        console.log("Attendance Data to send: ", attendanceData);
 
         try {
           await axios.post(`${BASE_URL}/students/attendance/${userId}`, attendanceData);
           success++;
         } catch (postError) {
+          console.error("Post error details:", postError.response?.data);
           const errorMessage = postError.response?.data?.message || 
                              postError.response?.data?.error || 
                              postError.message || 
@@ -189,7 +203,7 @@ const AddAttendance = () => {
         }
       } catch (error) {
         errors++;
-        newErrors.push(`Row ${index + 1}: ${error.message}`);
+        newErrors.push(`USN: ${row.USN || 'Unknown'} - ${error.message}`);
         console.error(`Error processing row ${index + 1}:`, error);
       }
     }

@@ -16,12 +16,14 @@ import {
 import axios from "axios";
 import { AuthContext } from "../../context/AuthContext";
 import { useSearchParams } from "react-router-dom";
+import useStudentSemester from "../../hooks/useStudentSemester";
 const BASE_URL = import.meta.env.VITE_API_URL;
 
 const External = () => {
   const { user } = useContext(AuthContext);
   const [searchParams] = useSearchParams();
   const menteeId = searchParams.get('menteeId');
+  const { semester: studentSemester, loading: semesterLoading } = useStudentSemester();
   
   const [externalData, setExternalData] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -33,6 +35,11 @@ const External = () => {
   const token = localStorage.getItem("token");
 
   const fetchExternalData = useCallback(async () => {
+    // Wait for semester to load before fetching
+    if (semesterLoading) {
+      return;
+    }
+
     // Use menteeId from URL params if available, otherwise use logged-in user ID
     const userId = menteeId || user?._id;
     
@@ -60,14 +67,19 @@ const External = () => {
         const data = response.data.data.external;
         if (data.semesters && data.semesters.length > 0) {
           setExternalData(data.semesters);
-          setSelectedSemester(data.semesters[0].semester);
+          // Use student's current semester from profile if available and exists in data
+          const defaultSem = studentSemester && data.semesters.find(s => s.semester === studentSemester)
+            ? studentSemester
+            : data.semesters[0].semester;
+          console.log('[External] Setting semester to:', defaultSem, '(studentSemester:', studentSemester, ', first available:', data.semesters[0].semester, ')');
+          setSelectedSemester(defaultSem);
         } else {
           setExternalData([]);
-          setSelectedSemester(1); // Default to first semester
+          setSelectedSemester(studentSemester || 1); // Use student's current semester or default to 1
         }
       } else {
         setExternalData([]);
-        setSelectedSemester(1); // Default to first semester
+        setSelectedSemester(studentSemester || 1); // Use student's current semester or default to 1
       }
 
       setLoading(false);
@@ -76,10 +88,10 @@ const External = () => {
       
       // For any error, including 404, just show an empty table
       setExternalData([]);
-      setSelectedSemester(1); // Default to first semester
+      setSelectedSemester(studentSemester || 1); // Use student's current semester or default to 1
       setLoading(false);
     }
-  }, [user, token, menteeId]);
+  }, [user, token, menteeId, studentSemester, semesterLoading]);
 
   useEffect(() => {
     fetchExternalData();
