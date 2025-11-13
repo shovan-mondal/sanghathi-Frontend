@@ -60,14 +60,32 @@ const AddAttendance = () => {
   const downloadTemplate = () => {
     const headers = [
       "USN",
-      "Sem",
-      "Month",
-      "Mathematics Code",
-      "Mathematics",
-      "Mathematics Total",
-      "Science Code",
-      "Science",
-      "Science Total",
+      "SEM",
+      "MONTH",
+      "SUBJECT 1",
+      "SCHEDULED",
+      "ATTENDED",
+      "SUBJECT 2",
+      "SCHEDULED",
+      "ATTENDED",
+      "SUBJECT 3",
+      "SCHEDULED",
+      "ATTENDED",
+      "SUBJECT 4",
+      "SCHEDULED",
+      "ATTENDED",
+      "SUBJECT 5",
+      "SCHEDULED",
+      "ATTENDED",
+      "SUBJECT 6",
+      "SCHEDULED",
+      "ATTENDED",
+      "SUBJECT 7",
+      "SCHEDULED",
+      "ATTENDED",
+      "SUBJECT 8",
+      "SCHEDULED",
+      "ATTENDED",
     ];
     const csvContent = Papa.unparse([headers], { quotes: true });
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
@@ -115,13 +133,19 @@ const AddAttendance = () => {
     const newErrors = [];
 
     for (const [index, row] of rows.entries()) {
+      // Find headers case-insensitively (declare outside try block for catch access)
+      const rowHeaders = Object.keys(row);
+      const usnKey = rowHeaders.find(h => h.toLowerCase() === 'usn');
+      const semKey = rowHeaders.find(h => h.toLowerCase() === 'sem');
+      const monthKey = rowHeaders.find(h => h.toLowerCase() === 'month');
+      
       try {
         console.log(`Processing row ${index + 1}:`, row);
         
         // Trim all values and check for required fields
-        const usn = row.USN?.toString().trim();
-        const sem = row.Sem?.toString().trim();
-        const month = row.Month?.toString().trim();
+        const usn = row[usnKey]?.toString().trim();
+        const sem = row[semKey]?.toString().trim();
+        const month = row[monthKey]?.toString().trim();
         
         if (!usn) {
           throw new Error("Missing USN");
@@ -140,38 +164,72 @@ const AddAttendance = () => {
         }
 
         const subjects = [];
-        const headers = Object.keys(row).filter(
-          (key) => key !== "USN" && key !== "Sem" && key !== "Month"
-        );
+        
+        // Group headers by their base name to handle Papa Parse's _1, _2 suffixes
+        // This handles duplicate column names like SCHEDULED, SCHEDULED_1, SCHEDULED_2
+        const subjectGroups = [];
+        const processedIndices = new Set();
+        
+        rowHeaders.forEach((header, idx) => {
+          if (['usn', 'sem', 'month'].includes(header.toLowerCase()) || processedIndices.has(idx)) {
+            return;
+          }
+          
+          // Check if this is a subject column (not scheduled/attended)
+          const headerLower = header.toLowerCase();
+          if (!headerLower.includes('scheduled') && !headerLower.includes('attended')) {
+            // This is a subject name column
+            // Find the next two columns that are scheduled and attended
+            let scheduledHeader = null;
+            let attendedHeader = null;
+            
+            for (let i = idx + 1; i < rowHeaders.length; i++) {
+              if (processedIndices.has(i)) continue;
+              
+              const nextHeader = rowHeaders[i];
+              const nextLower = nextHeader.toLowerCase();
+              
+              if (!scheduledHeader && nextLower.includes('scheduled')) {
+                scheduledHeader = nextHeader;
+                processedIndices.add(i);
+              } else if (scheduledHeader && !attendedHeader && nextLower.includes('attended')) {
+                attendedHeader = nextHeader;
+                processedIndices.add(i);
+                break;
+              }
+            }
+            
+            if (scheduledHeader && attendedHeader) {
+              subjectGroups.push({
+                subjectHeader: header,
+                scheduledHeader,
+                attendedHeader
+              });
+              processedIndices.add(idx);
+            }
+          }
+        });
 
-        // Process subjects in groups of 3 (code, name, total)
-        for (let i = 0; i < headers.length; i += 3) {
-          const subjectCodeHeader = headers[i];
-          const subjectHeader = headers[i + 1];
-          const totalHeader = headers[i + 2];
+        // Process each subject group
+        for (const { subjectHeader, scheduledHeader, attendedHeader } of subjectGroups) {
+          const subjectName = row[subjectHeader]?.toString().trim();
+          const scheduled = parseInt(row[scheduledHeader], 10);
+          const attended = parseInt(row[attendedHeader], 10);
           
-          if (!totalHeader || !totalHeader.endsWith(" Total")) {
-            throw new Error(`Invalid subject columns at ${subjectHeader}`);
+          // Skip if subject name is empty or is "cumulative"
+          if (!subjectName || subjectName.toLowerCase() === 'cumulative') {
+            continue;
           }
           
-          const subjectName = subjectHeader.replace(" Total", "");
-          const subjectCode = row[subjectCodeHeader]?.toString().trim();
-          const attended = parseInt(row[subjectHeader], 10);
-          const total = parseInt(row[totalHeader], 10);
-          
-          if (!subjectCode) {
-            throw new Error(`Missing subject code for ${subjectName}`);
-          }
-          
-          if (isNaN(attended) || isNaN(total)) {
+          if (isNaN(scheduled) || isNaN(attended)) {
             throw new Error(`Invalid numbers for ${subjectName}`);
           }
           
           subjects.push({
-            subjectCode,
+            subjectCode: '',  // No subject code in this format
             subjectName,
             attendedClasses: attended,
-            totalClasses: total,
+            totalClasses: scheduled,
           });
         }
 
@@ -203,7 +261,7 @@ const AddAttendance = () => {
         }
       } catch (error) {
         errors++;
-        newErrors.push(`USN: ${row.USN || 'Unknown'} - ${error.message}`);
+        newErrors.push(`USN: ${row[usnKey] || 'Unknown'} - ${error.message}`);
         console.error(`Error processing row ${index + 1}:`, error);
       }
     }

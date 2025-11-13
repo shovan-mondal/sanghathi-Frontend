@@ -21,6 +21,7 @@ const Attendance = () => {
   const [searchParams] = useSearchParams();
   const { semester: studentSemester, loading: semesterLoading } = useStudentSemester();
   const [attendanceData, setAttendanceData] = useState([]);
+  const [studentInfo, setStudentInfo] = useState({ usn: '', name: '' });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [selectedSemester, setSelectedSemester] = useState(null); // Initialize to null
@@ -37,6 +38,29 @@ const Attendance = () => {
       const menteeId = searchParams.get('menteeId') || user._id;
       
       console.log("Fetching attendance for ID:", menteeId); // Debug log
+      
+      // Fetch student info (optional - don't fail if this errors)
+      try {
+        const userResponse = await axios.get(
+          `${BASE_URL}/users/${menteeId}`
+        );
+        
+        if (userResponse.data?.data?.user) {
+          setStudentInfo({
+            usn: userResponse.data.data.user.usn || '',
+            name: userResponse.data.data.user.name || ''
+          });
+        }
+      } catch (userError) {
+        console.warn("Could not fetch user info:", userError);
+        // Use user from context as fallback
+        if (user) {
+          setStudentInfo({
+            usn: user.usn || '',
+            name: user.name || ''
+          });
+        }
+      }
       
       const response = await axios.get(
         `${BASE_URL}/students/attendance/${menteeId}`
@@ -156,27 +180,44 @@ const Attendance = () => {
         // Get all subjects from all months in the selected semester
         const allSubjects = semesterData.months.flatMap(monthData => monthData.subjects);
         
-        // Create a Map to store unique subjects by subjectCode
+        // Create a Map to store unique subjects by subjectName (since subjectCode might be missing)
         const uniqueSubjects = new Map();
         
-        // Process all subjects, keeping only the most recent entry for each subjectCode
+        // Process all subjects, keeping only the most recent entry for each subject
         allSubjects.forEach(subject => {
-            if (subject.subjectCode) {
-                uniqueSubjects.set(subject.subjectCode, {
-                    subjectCode: subject.subjectCode,
-                    subjectName: subject.subjectName
+            // Use subjectName as the unique key since subjectCode might be empty
+            const key = subject.subjectName || 'Unknown Subject';
+            if (!uniqueSubjects.has(key)) {
+                uniqueSubjects.set(key, {
+                    subjectCode: subject.subjectCode || 'N/A',
+                    subjectName: subject.subjectName || 'Unknown Subject'
                 });
             }
         });
 
-        // Convert Map to array and sort by subjectCode
+        // Convert Map to array and sort by subjectName
         return Array.from(uniqueSubjects.values())
-            .sort((a, b) => a.subjectCode.localeCompare(b.subjectCode));
+            .sort((a, b) => a.subjectName.localeCompare(b.subjectName));
     };
 
   return (
     <Box sx={{ p: 2 }}>
       <h1 sx={{ textAlign: "center", mb: 2 }}>Attendance Report</h1>
+      {studentInfo.usn && (
+        <Box sx={{ mb: 2, display: 'flex', gap: 2, justifyContent: 'center' }}>
+          <strong>USN:</strong> {studentInfo.usn}
+          {studentInfo.name && (
+            <>
+              <strong>Name:</strong> {studentInfo.name}
+            </>
+          )}
+          {selectedSemester && (
+            <>
+              <strong>Semester:</strong> {selectedSemester}
+            </>
+          )}
+        </Box>
+      )}
       <Box sx={{ display: "flex", justifyContent: "center", mb: 2 }}>
         <label>
           Select Semester:
@@ -228,8 +269,8 @@ const Attendance = () => {
             </TableRow>
           </TableHead>
           <TableBody>
-            {getSubjectsForSemester().map((subject) => (
-                <TableRow key={subject.subjectCode}>
+            {getSubjectsForSemester().map((subject, index) => (
+                <TableRow key={`${subject.subjectName}-${index}`}>
                   <TableCell sx={{ border: "1px solid gray" }}>
                     {subject.subjectCode}
                   </TableCell>

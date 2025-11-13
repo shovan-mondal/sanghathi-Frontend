@@ -91,8 +91,6 @@ const studentNavConfig = [
 const getNavConfig = (role) => {
   console.log("ROLE", role);
   switch (role) {
-    case "hod":
-      return adminNavConfig;
     case "admin":
       return adminNavConfig;
     case "faculty":

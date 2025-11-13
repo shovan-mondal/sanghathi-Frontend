@@ -71,17 +71,14 @@ const POAttainmentGrading = () => {
     "Create"
   ];
 
-  useEffect(() => {
-    // Only fetch data after studentSemester has finished loading
-    if (!semesterLoading) {
-      fetchAllPOAttainmentData();
-    }
-  }, [semesterLoading, fetchAllPOAttainmentData]);
-  
-  useEffect(() => {
-    // When semesterData or selectedSemester changes, update the current PO data
-    updateCurrentSemesterData();
-  }, [updateCurrentSemesterData]);
+  const resetToEmptyData = useCallback(() => {
+    const emptyPOData = {};
+    programOutcomes.forEach(po => {
+      emptyPOData[po.code] = { cl: 1, justification: "" };
+    });
+    setPOAttainmentData(emptyPOData);
+    setBloomLevelData({ level: 1 });
+  }, []);
 
   const fetchAllPOAttainmentData = useCallback(async () => {
     try {
@@ -113,7 +110,7 @@ const POAttainmentGrading = () => {
       setError("Failed to fetch data. Using empty template.");
       setLoading(false);
     }
-  }, [menteeId, user?._id, studentSemester, selectedSemester]);
+  }, [menteeId, user?._id, studentSemester, selectedSemester, resetToEmptyData]);
   
   const updateCurrentSemesterData = useCallback(() => {
     if (!selectedSemester || semesterData.length === 0) {
@@ -130,16 +127,19 @@ const POAttainmentGrading = () => {
     } else {
       resetToEmptyData();
     }
-  }, [selectedSemester, semesterData]);
+  }, [selectedSemester, semesterData, resetToEmptyData]);
+
+  useEffect(() => {
+    // Only fetch data after studentSemester has finished loading
+    if (!semesterLoading) {
+      fetchAllPOAttainmentData();
+    }
+  }, [semesterLoading, fetchAllPOAttainmentData]);
   
-  const resetToEmptyData = () => {
-    const emptyPOData = {};
-    programOutcomes.forEach(po => {
-      emptyPOData[po.code] = { cl: 1, justification: "" };
-    });
-    setPOAttainmentData(emptyPOData);
-    setBloomLevelData({ level: 1 });
-  };
+  useEffect(() => {
+    // When semesterData or selectedSemester changes, update the current PO data
+    updateCurrentSemesterData();
+  }, [updateCurrentSemesterData]);
 
   const handleSemesterChange = (event) => {
     setSelectedSemester(parseInt(event.target.value, 10));

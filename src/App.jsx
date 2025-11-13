@@ -416,21 +416,11 @@ function App() {
                       </ProtectedRouteWrapper>
                     }
                   />
-                </Route>
                   <Route
-                  path="/mentor-mentee-conversation"
-                  element={
-                    <ProtectedRouteWrapper>
-                      <LazyLoadWrapper component={MentorMenteeConversation} />
-                    </ProtectedRouteWrapper>
-                    
-                    }
-                  />
-                  <Route
-                    path="/feedbackpage"
+                    path="/mentor-mentee-conversation"
                     element={
                       <ProtectedRouteWrapper>
-                        <LazyLoadWrapper component={FeedbackTable} />
+                        <LazyLoadWrapper component={MentorMenteeConversation} />
                       </ProtectedRouteWrapper>
                     }
                   />
