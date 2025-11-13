@@ -291,6 +291,14 @@ const FacultyDashboard = () => {
                 link="/threads"
               />
             </Grid>
+            <Grid item xs={12} sm={6} md={6} lg={4}>
+              <StudentTile
+                title="Mentor-Mentee Conversation"
+                icon={<AssignmentIcon />}
+                link="/mentor-mentee-conversation"
+              />
+            </Grid>
+
             
             {/* <Grid item xs={12} sm={6} md={isLight ? 6 : 6} lg={isLight ? 4 : 4}>
               <StudentTile

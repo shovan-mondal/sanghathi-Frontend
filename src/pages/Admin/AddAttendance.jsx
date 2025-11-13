@@ -58,24 +58,36 @@ const AddAttendance = () => {
 
 
   const downloadTemplate = () => {
-    // Example with 5 subjects, but can be extended
     const headers = [
-      "USN", "SEM", "MONTH",
-      "SUBJECT 1", "SCHEDULED 1", "ATTENDED 1",
-      "SUBJECT 2", "SCHEDULED 2", "ATTENDED 2",
-      "SUBJECT 3", "SCHEDULED 3", "ATTENDED 3",
-      "SUBJECT 4", "SCHEDULED 4", "ATTENDED 4",
-      "SUBJECT 5", "SCHEDULED 5", "ATTENDED 5"
+      "USN",
+      "SEM",
+      "MONTH",
+      "SUBJECT 1",
+      "SCHEDULED",
+      "ATTENDED",
+      "SUBJECT 2",
+      "SCHEDULED",
+      "ATTENDED",
+      "SUBJECT 3",
+      "SCHEDULED",
+      "ATTENDED",
+      "SUBJECT 4",
+      "SCHEDULED",
+      "ATTENDED",
+      "SUBJECT 5",
+      "SCHEDULED",
+      "ATTENDED",
+      "SUBJECT 6",
+      "SCHEDULED",
+      "ATTENDED",
+      "SUBJECT 7",
+      "SCHEDULED",
+      "ATTENDED",
+      "SUBJECT 8",
+      "SCHEDULED",
+      "ATTENDED",
     ];
-    const exampleRow = [
-      "1CR23IS000", "2", "May",
-      "Mathematics", "40", "38",
-      "Physics", "35", "30",
-      "Chemistry", "30", "28",
-      "English", "25", "25",
-      "Biology", "20", "18"
-    ];
-    const csvContent = Papa.unparse([headers, exampleRow], { quotes: true });
+    const csvContent = Papa.unparse([headers], { quotes: true });
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
     const link = document.createElement("a");
     const url = URL.createObjectURL(blob);
@@ -121,77 +133,135 @@ const AddAttendance = () => {
     const newErrors = [];
 
     for (const [index, row] of rows.entries()) {
+      // Find headers case-insensitively (declare outside try block for catch access)
+      const rowHeaders = Object.keys(row);
+      const usnKey = rowHeaders.find(h => h.toLowerCase() === 'usn');
+      const semKey = rowHeaders.find(h => h.toLowerCase() === 'sem');
+      const monthKey = rowHeaders.find(h => h.toLowerCase() === 'month');
+      
       try {
-        if (!row.USN || !row.SEM || !row.MONTH) {
-          throw new Error("Missing required fields (USN, SEM, MONTH)");
+        console.log(`Processing row ${index + 1}:`, row);
+        
+        // Trim all values and check for required fields
+        const usn = row[usnKey]?.toString().trim();
+        const sem = row[semKey]?.toString().trim();
+        const month = row[monthKey]?.toString().trim();
+        
+        if (!usn) {
+          throw new Error("Missing USN");
+        }
+        if (!sem) {
+          throw new Error("Missing Sem (Semester)");
+        }
+        if (!month) {
+          throw new Error("Missing Month");
         }
 
         // Convert month name to number using case-insensitive matching
-        const monthValue = getMonthValue(row.MONTH);
+        const monthValue = getMonthValue(month);
         if (monthValue === undefined) {
-          throw new Error(`Invalid month: ${row.MONTH}. Use month names like January, Jan, February, Feb, etc.`);
+          throw new Error(`Invalid month: ${month}. Use month names like January, Jan, February, Feb, etc.`);
         }
 
-        // Dynamically extract subjects
         const subjects = [];
-        // Get all keys except USN, SEM, MONTH
-        const keys = Object.keys(row).filter(
-          (key) => !["USN", "SEM", "MONTH"].includes(key)
-        );
-        // Subjects are in groups of 3: SUBJECT, SCHEDULED, ATTENDED
-        for (let i = 0; i < keys.length; i += 3) {
-          const subjectNameKey = keys[i];
-          const scheduledKey = keys[i + 1];
-          const attendedKey = keys[i + 2];
-          const subjectName = row[subjectNameKey];
-          const scheduled = row[scheduledKey];
-          const attended = row[attendedKey];
-          if (!subjectName || subjectName.trim() === "") continue;
-          // If all three are empty, skip
-          if (
-            (!subjectName || subjectName.trim() === "") &&
-            (!scheduled || scheduled.trim() === "") &&
-            (!attended || attended.trim() === "")
-          ) {
+        
+        // Group headers by their base name to handle Papa Parse's _1, _2 suffixes
+        // This handles duplicate column names like SCHEDULED, SCHEDULED_1, SCHEDULED_2
+        const subjectGroups = [];
+        const processedIndices = new Set();
+        
+        rowHeaders.forEach((header, idx) => {
+          if (['usn', 'sem', 'month'].includes(header.toLowerCase()) || processedIndices.has(idx)) {
+            return;
+          }
+          
+          // Check if this is a subject column (not scheduled/attended)
+          const headerLower = header.toLowerCase();
+          if (!headerLower.includes('scheduled') && !headerLower.includes('attended')) {
+            // This is a subject name column
+            // Find the next two columns that are scheduled and attended
+            let scheduledHeader = null;
+            let attendedHeader = null;
+            
+            for (let i = idx + 1; i < rowHeaders.length; i++) {
+              if (processedIndices.has(i)) continue;
+              
+              const nextHeader = rowHeaders[i];
+              const nextLower = nextHeader.toLowerCase();
+              
+              if (!scheduledHeader && nextLower.includes('scheduled')) {
+                scheduledHeader = nextHeader;
+                processedIndices.add(i);
+              } else if (scheduledHeader && !attendedHeader && nextLower.includes('attended')) {
+                attendedHeader = nextHeader;
+                processedIndices.add(i);
+                break;
+              }
+            }
+            
+            if (scheduledHeader && attendedHeader) {
+              subjectGroups.push({
+                subjectHeader: header,
+                scheduledHeader,
+                attendedHeader
+              });
+              processedIndices.add(idx);
+            }
+          }
+        });
+
+        // Process each subject group
+        for (const { subjectHeader, scheduledHeader, attendedHeader } of subjectGroups) {
+          const subjectName = row[subjectHeader]?.toString().trim();
+          const scheduled = parseInt(row[scheduledHeader], 10);
+          const attended = parseInt(row[attendedHeader], 10);
+          
+          // Skip if subject name is empty or is "cumulative"
+          if (!subjectName || subjectName.toLowerCase() === 'cumulative') {
             continue;
           }
-          // If scheduled or attended is missing, treat as 0
+          
+          if (isNaN(scheduled) || isNaN(attended)) {
+            throw new Error(`Invalid numbers for ${subjectName}`);
+          }
+          
           subjects.push({
-            subjectName: subjectName.trim(),
-            totalClasses: scheduled ? parseInt(scheduled, 10) : 0,
-            attendedClasses: attended ? parseInt(attended, 10) : 0,
+            subjectCode: '',  // No subject code in this format
+            subjectName,
+            attendedClasses: attended,
+            totalClasses: scheduled,
           });
         }
 
-        if (subjects.length === 0) {
-          throw new Error("No subject data found for this row.");
-        }
-
-        const response = await axios.get(`${BASE_URL}/users/usn/${row.USN}`);
+        const response = await axios.get(`${BASE_URL}/users/usn/${usn}`);
+        console.log("User lookup response: ", response);
         if (!response.data?.userId) {
-          throw new Error(`User with USN ${row.USN} not found`);
+          throw new Error(`User not found`);
         }
         const userId = response.data.userId;
+        console.log("UserId: ", userId);
 
         const attendanceData = {
-          semester: isNaN(row.SEM) ? row.SEM : parseInt(row.SEM, 10),
+          semester: parseInt(sem, 10),
           month: monthValue,
           subjects,
         };
+        console.log("Attendance Data to send: ", attendanceData);
 
         try {
           await axios.post(`${BASE_URL}/students/attendance/${userId}`, attendanceData);
           success++;
         } catch (postError) {
-          const errorMessage = postError.response?.data?.message ||
-            postError.response?.data?.error ||
-            postError.message ||
-            'Unknown error occurred';
+          console.error("Post error details:", postError.response?.data);
+          const errorMessage = postError.response?.data?.message || 
+                             postError.response?.data?.error || 
+                             postError.message || 
+                             'Unknown error occurred';
           throw new Error(`Failed to save attendance: ${errorMessage}`);
         }
       } catch (error) {
         errors++;
-        newErrors.push(`Row ${index + 1}: ${error.message}`);
+        newErrors.push(`USN: ${row[usnKey] || 'Unknown'} - ${error.message}`);
         console.error(`Error processing row ${index + 1}:`, error);
       }
     }

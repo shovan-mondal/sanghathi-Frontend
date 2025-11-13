@@ -211,7 +211,7 @@ function UserList({ onEdit }) {
 
   const filteredUsers = users.filter((user) => {
     const matchesSearch = user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         user.email.toLowerCase().includes(searchQuery.toLowerCase()); // Keep email search
+                         user.email.toLowerCase().includes(searchQuery.toLowerCase());
     
     const matchesRole = filterRole === "all" || user.roleName === filterRole;
     const matchesDepartment = filterDepartment === "all" || user.department === filterDepartment;
@@ -345,7 +345,7 @@ function UserList({ onEdit }) {
                     />
                   </TableCell>
                   <TableCell>Name</TableCell>
-                  <TableCell>USN</TableCell> {/* Moved to second position */}
+                  <TableCell>Email</TableCell>
                   <TableCell>Phone</TableCell>
                   <TableCell>Role</TableCell>
                   <TableCell>Department</TableCell>
@@ -356,7 +356,7 @@ function UserList({ onEdit }) {
               <TableBody>
                 {filteredUsers.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={8} align="center" sx={{ py: 4 }}> {/* Update colSpan from 9 to 8 */}
+                    <TableCell colSpan={8} align="center" sx={{ py: 4 }}>
                       <Typography variant="body1" color="text.secondary">
                         No users found matching your criteria
                       </Typography>
@@ -408,14 +408,12 @@ function UserList({ onEdit }) {
                                 {user.name || "N/A"}
                               </Typography>
                               <Typography variant="caption" color="text.secondary">
-                                {user.email || "N/A"} {/* Keep email as subtitle under name */}
+                                {user.email || "N/A"}
                               </Typography>
                             </Box>
                           </Box>
                         </TableCell>
-                        <TableCell>
-                          {user.roleName === "student" ? (user.usn || "N/A") : "N/A"}
-                        </TableCell>
+                        <TableCell>{user.email || "N/A"}</TableCell>
                         <TableCell>{user.phone || "N/A"}</TableCell>
                         <TableCell>
                           <Chip

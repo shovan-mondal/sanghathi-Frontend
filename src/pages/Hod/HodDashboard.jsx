@@ -9,7 +9,6 @@ import {
   useTheme,
   Box,
   Paper,
-  Chip,
 } from "@mui/material";
 import {
   PersonAdd as PersonAddIcon,
@@ -233,7 +232,7 @@ const HodDashboard = () => {
                 color="text.secondary" 
                 sx={{ maxWidth: '600px', mt: 3 }}
               >
-                Welcome to the Sanghathi Hod portal. Manage users from here.
+                Welcome to the Sanghathi Hod portal. Manage users and system data from here.
               </Typography>
             </Box>
           </Paper>
@@ -247,12 +246,20 @@ const HodDashboard = () => {
               link="/faculty/FacultyProfile"
             />
           </Grid>
-
+          
           <Grid item xs={12} sm={6} md={isLight ? 6 : 6} lg={isLight ? 4 : 4}>
             <HodTile
-              title="View Department Mentors"
+              title="View All Users"
+              icon={<PeopleAltIcon />}
+              link="/Hod/users"
+            />
+          </Grid>
+          
+          <Grid item xs={12} sm={6} md={isLight ? 6 : 6} lg={isLight ? 4 : 4}>
+            <HodTile
+              title="Assign Mentors"
               icon={<SupervisorAccountIcon />}
-              link="/hod/mentors"
+              link="/Hod/mentor-assignment"
             />
           </Grid>
           
@@ -262,74 +269,6 @@ const HodDashboard = () => {
               icon={<SummarizeIcon />}
               link="/report"
             />
-          </Grid>
-
-          <Grid item xs={12} sm={6} md={isLight ? 6 : 6} lg={isLight ? 4 : 4}>
-            <Card
-              sx={{
-                transition: "all 0.3s ease",
-                borderRadius: 3,
-                borderLeft: `4px solid ${isLight ? theme.palette.warning.main : theme.palette.warning.light}`,
-                overflow: 'hidden',
-                backgroundColor: isLight 
-                  ? alpha(theme.palette.warning.main, 0.05)
-                  : alpha(theme.palette.warning.main, 0.12),
-                position: 'relative',
-                opacity: 0.7,
-              }}
-            >
-              <CardContent
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "flex-start",
-                  flexDirection: "row",
-                  minHeight: "auto",
-                  p: 3,
-                }}
-              >
-                <Box
-                  sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    width: 64,
-                    height: 64,
-                    borderRadius: '12px',
-                    mr: 3,
-                    backgroundColor: isLight
-                      ? alpha(theme.palette.warning.main, 0.1)
-                      : alpha(theme.palette.warning.main, 0.15),
-                    color: isLight
-                      ? theme.palette.warning.main
-                      : theme.palette.warning.light,
-                  }}
-                >
-                  <AssignmentIcon fontSize="large" />
-                </Box>
-                
-                <Box>
-                  <Typography 
-                    variant="h6" 
-                    component="div"
-                    sx={{ 
-                      fontWeight: 600,
-                      color: theme.palette.text.primary,
-                      mb: 0.5
-                    }}
-                  >
-                    ML Analysis
-                  </Typography>
-                  
-                  <Chip 
-                    label="Coming Soon" 
-                    size="small"
-                    color="warning"
-                    sx={{ mt: 0.5 }}
-                  />
-                </Box>
-              </CardContent>
-            </Card>
           </Grid>
         </Grid>
       </Container>

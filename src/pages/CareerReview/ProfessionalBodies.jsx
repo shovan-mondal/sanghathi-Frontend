@@ -16,13 +16,6 @@ export default function ProffessionalBodiesEvents() {
     const menteeId = searchParams.get('menteeId');
     const theme = useTheme();
     const isLight = theme.palette.mode === 'light';
-    
-    // Check if the current user is faculty
-    const isFaculty = user?.roleName === "faculty";
-    
-    // Fields should be editable only if user is not faculty
-    const isEditable = !isFaculty;
-    
     console.log("User : ",user);
     console.log("id: ",menteeId);
 
@@ -95,13 +88,6 @@ export default function ProffessionalBodiesEvents() {
 
   return (
     <FormProvider methods={methods} onSubmit={handleSubmit(onSubmit)}>
-      {isFaculty && (
-        <Box sx={{ mb: 2, p: 2, bgcolor: 'warning.light', borderRadius: 1 }}>
-          <Typography variant="body2" color="warning.dark">
-            You are viewing this student profile in read-only mode. Only students can edit their own profiles.
-          </Typography>
-        </Box>
-      )}
       <Card sx={{ p: 3 }}>
         <Typography variant="h6" gutterBottom>
           Proffessional Bodies Registered
@@ -129,10 +115,6 @@ export default function ProffessionalBodiesEvents() {
                 name={`proffessionalbodies[${index}].ProffessionalBodyName`} 
                 label="Professional Body Name" 
                 fullWidth 
-                disabled={!isEditable}
-                InputProps={{
-                  readOnly: !isEditable,
-                }}
                 />
               </Grid>
               <Grid item xs={4}>
@@ -140,10 +122,6 @@ export default function ProffessionalBodiesEvents() {
                   name={`proffessionalbodies[${index}].UniqueID`}
                   label="Unique ID"
                   fullWidth
-                  disabled={!isEditable}
-                  InputProps={{
-                    readOnly: !isEditable,
-                  }}
                 />
 
               </Grid>
@@ -154,41 +132,33 @@ export default function ProffessionalBodiesEvents() {
                   type="date"
                   InputLabelProps={{ shrink: true }}
                   fullWidth
-                  disabled={!isEditable}
-                  InputProps={{
-                    readOnly: !isEditable,
-                  }}
                 />
               </Grid>
               <Grid item xs={1}>
-                {isEditable && (
-                  <IconButton
-                    color="error"
-                    onClick={() =>  remove(index)}
-                    sx={{ mt: 1 }}
-                  >
-                    <DeleteIcon />
-                  </IconButton>
-                )}
+                <IconButton
+                  color="error"
+                  onClick={() =>  remove(index)}
+                  sx={{ mt: 1 }}
+                >
+                  <DeleteIcon />
+                </IconButton>
               </Grid>
             </Grid>
           ))}
           <Grid item xs={12}>
-            {isEditable && (
-              <Button
-                variant="contained"
-                color={isLight ? "primary" : "info"}
-                onClick={() => append({ ProffessionalBodyName: "", UniqueID: "", registeredDate: null })} 
-                sx={{ mt: 2, display: "block", mx: "auto" }}
-              >
-                Add Proffessional Body
-              </Button>
-            )}
+            <Button
+              variant="contained"
+              color={isLight ? "primary" : "info"}
+              onClick={() => append({ ProffessionalBodyName: "", UniqueID: "", registeredDate: null })} 
+              sx={{ mt: 2, display: "block", mx: "auto" }}
+            >
+              Add Proffessional Body
+            </Button>
           </Grid>
           <Grid item xs={12}>
             <Stack spacing={3} alignItems="flex-end" sx={{ mt: 3 }}>
               <Box display="flex" gap={1}>
-                {import.meta.env.MODE === "development" && isEditable && (
+                {import.meta.env.MODE === "development" && (
                   <LoadingButton 
                   variant="outlined"
                   color={isLight ? "primary" : "info"}
@@ -196,15 +166,13 @@ export default function ProffessionalBodiesEvents() {
                     Reset
                   </LoadingButton>
                 )}
-                {isEditable && (
-                  <LoadingButton 
-                    type="submit" 
-                    variant="contained" 
-                    color={isLight ? "primary" : "info"}
-                    loading={isSubmitting}>
-                    Save
-                  </LoadingButton>
-                )}
+                <LoadingButton 
+                  type="submit" 
+                  variant="contained" 
+                  color={isLight ? "primary" : "info"}
+                  loading={isSubmitting}>
+                  Save
+                </LoadingButton>
               </Box>
             </Stack>
           </Grid>

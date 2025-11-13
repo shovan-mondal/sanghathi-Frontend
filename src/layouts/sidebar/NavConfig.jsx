@@ -15,6 +15,18 @@ import DashboardOutlinedIcon from '@mui/icons-material/DashboardOutlined';
 // Campus buddy icon needs special treatment as it represents a feature
 // NavItemButton already handles the correct color for all icons based on theme mode
 // This setup keeps the config simpler
+const HodNavConfig = [
+  {
+    text: "Home",
+    icon: <HomeOutlinedIcon />,
+    link: "/hod/dashboard",
+  },
+  { text: "View Users", 
+    icon: <PeopleOutlinedIcon />, 
+    link: "/hod/users" },
+  { text: "Reports", icon: <SummarizeOutlinedIcon />, link: "/report" },
+  { text: "Settings", icon: <SettingsOutlinedIcon />, link: "/settings" },
+];
 
 const adminNavConfig = [
   {

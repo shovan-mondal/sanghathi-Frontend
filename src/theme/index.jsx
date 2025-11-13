@@ -17,9 +17,6 @@ import typography from "./typography";
 import breakpoints from "./breakpoints";
 import shadows, { customShadows } from "./shadows";
 
-// Import TextField override
-import TextField from "../components/TextField";
-
 // ----------------------------------------------------------------------
 
 ThemeProvider.propTypes = {
@@ -48,21 +45,12 @@ export default function ThemeProvider({ children }) {
 
   const theme = createTheme(themeOptions);
 
-  // Apply TextField overrides
-  const themeWithComponents = createTheme({
-    ...theme,
-    components: {
-      ...theme.components,
-      ...TextField(theme),
-    },
-  });
-
   // Apply global theme object with dark mode color mapping
-  themeWithComponents.colorMode = isLight ? 'primary' : 'info';
+  theme.colorMode = isLight ? 'primary' : 'info';
 
   return (
     <StyledEngineProvider injectFirst>
-      <MUIThemeProvider theme={themeWithComponents}>
+      <MUIThemeProvider theme={theme}>
         <CssBaseline />
         {children}
       </MUIThemeProvider>

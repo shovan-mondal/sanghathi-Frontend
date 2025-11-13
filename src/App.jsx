@@ -48,6 +48,7 @@ import FetchStudentProfile from "./pages/Faculty/FetchStudentProfile";
 import StudentDashboard from "./pages/Faculty/StudentDashboard";
 import Settings from "./pages/Settings/Settings";
 import TYLScorecard from "./pages/Student/TYLScorecard";
+import MentorMenteeConversation from "./pages/MentorMentee/MentorMenteeConversation";
 import MyChatBot from "./mychatbot";
 import { useLocation } from 'react-router-dom';
 import { initGA, trackPageView } from "./ga";
@@ -78,19 +79,11 @@ function App() {
           <div className="app">
             <main className="content">
               <Routes>
-                <Route path="/signup" element={<Signup />} />
                 <Route
                   path="/login"
                   element={user ? <Navigate replace to="/" /> : <Login />}
                 />
-                <Route
-                  path="/forgotPassword"
-                  element={<ForgotPassword />}
-                />
-                <Route 
-                path="/resetPassword/:token" 
-                element={<ResetPassword />} 
-                />
+                <Route path="/signup" element={<Signup />} />
 
                 <Route element={<DashboardLayout />}>
                   <Route
@@ -141,18 +134,18 @@ function App() {
                     }
                   />
                   <Route
-                    path="/director/dashboard"
-                    element={
-                      <ProtectedRouteWrapper allowedRoles={["director"]}>
-                        <LazyLoadWrapper component={DirectorDashboard} />
-                      </ProtectedRouteWrapper>
-                    }
-                  />
-                  <Route
                     path="/hod/dashboard"
                     element={
                       <ProtectedRouteWrapper allowedRoles={["hod"]}>
                         <LazyLoadWrapper component={HodDashboard} />
+                      </ProtectedRouteWrapper>
+                    }
+                  />
+                  <Route
+                    path="/director/dashboard"
+                    element={
+                      <ProtectedRouteWrapper allowedRoles={["director"]}>
+                        <LazyLoadWrapper component={DirectorDashboard} />
                       </ProtectedRouteWrapper>
                     }
                   />
@@ -164,30 +157,6 @@ function App() {
                       </ProtectedRouteWrapper>
                     }
                   />
-                  {/* <Route
-                    path="/hod/mentor/:mentorId/mentees"
-                    element={
-                      <ProtectedRouteWrapper allowedRoles={["hod"]}>
-                        <LazyLoadWrapper component={HodMenteesList} />
-                      </ProtectedRouteWrapper>
-                    }
-                  />
-                  <Route
-                    path="/hod/mentor-dashboard/:mentorId"
-                    element={
-                      <ProtectedRouteWrapper allowedRoles={["hod"]}>
-                        <LazyLoadWrapper component={HodMentorDashboard} />
-                      </ProtectedRouteWrapper>
-                    }
-                  />
-                  <Route
-                    path="/hod/mentee-profile/:menteeId"
-                    element={
-                      <ProtectedRouteWrapper allowedRoles={["hod"]}>
-                        <LazyLoadWrapper component={StudentDashboard} />
-                      </ProtectedRouteWrapper>
-                    }
-                  /> */}
                   <Route
                     path="/director/mentors"
                     element={
@@ -424,6 +393,22 @@ function App() {
                     }
                   />
                   <Route
+                    path="/faculty/dashboard"
+                    element={
+                      <ProtectedRouteWrapper allowedRoles={["faculty"]}>
+                        <LazyLoadWrapper component={FacultyDashboard} />
+                      </ProtectedRouteWrapper>
+                    }
+                  />
+                  <Route
+                    path="/faculty/mentor-mentee-conversation/:menteeId"
+                    element={
+                      <ProtectedRouteWrapper allowedRoles={["faculty"]}>
+                        <LazyLoadWrapper component={MentorMenteeConversation} />
+                      </ProtectedRouteWrapper>
+                    }
+                  />
+                  <Route
                     path="/student/tyl-scorecard"
                     element={
                       <ProtectedRouteWrapper>
@@ -432,18 +417,10 @@ function App() {
                     }
                   />
                   <Route
-                    path="/feedback"
+                    path="/mentor-mentee-conversation"
                     element={
                       <ProtectedRouteWrapper>
-                        <LazyLoadWrapper component={FeedbackForm} />
-                      </ProtectedRouteWrapper>
-                    }
-                  />
-                  <Route
-                    path="/feedbackpage"
-                    element={
-                      <ProtectedRouteWrapper>
-                        <LazyLoadWrapper component={FeedbackTable} />
+                        <LazyLoadWrapper component={MentorMenteeConversation} />
                       </ProtectedRouteWrapper>
                     }
                   />

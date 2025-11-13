@@ -28,12 +28,6 @@ export default function Hobbies() {
   const [searchParams] = useSearchParams();
   const menteeId = searchParams.get('menteeId');
 
-  // Check if the current user is faculty
-  const isFaculty = user?.roleName === "faculty";
-  
-  // Fields should be editable only if user is not faculty
-  const isEditable = !isFaculty;
-
   const [isDataFetched, setIsDataFetched] = useState(false);
   const methods = useForm({
     defaultValues,
@@ -100,13 +94,6 @@ export default function Hobbies() {
 
   return (
     <FormProvider methods={methods} onSubmit={handleSubmit(onSubmit)}>
-      {isFaculty && (
-        <Box sx={{ mb: 2, p: 2, bgcolor: 'warning.light', borderRadius: 1 }}>
-          <Typography variant="body2" color="warning.dark">
-            You are viewing this student profile in read-only mode. Only students can edit their own profiles.
-          </Typography>
-        </Box>
-      )}
       <Grid container spacing={2}>
         <Grid item xs={12}>
           <Card sx={{ p: 3 }}>
@@ -125,10 +112,6 @@ export default function Hobbies() {
                 InputLabelProps={{ shrink: isDataFetched }}
                 multiline
                 fullWidth
-                disabled={!isEditable}
-                InputProps={{
-                  readOnly: !isEditable,
-                }}
               />
 
               <RHFTextField
@@ -137,10 +120,6 @@ export default function Hobbies() {
                 InputLabelProps={{ shrink: isDataFetched }}
                 fullWidth
                 multiline
-                disabled={!isEditable}
-                InputProps={{
-                  readOnly: !isEditable,
-                }}
               />
 
               <Box>
@@ -154,10 +133,6 @@ export default function Hobbies() {
                     InputLabelProps={{ shrink: isDataFetched }}
                     fullWidth
                     multiline
-                    disabled={!isEditable}
-                    InputProps={{
-                      readOnly: !isEditable,
-                    }}
                   />
                   <RHFTextField
                     name="cultural"
@@ -165,10 +140,6 @@ export default function Hobbies() {
                     InputLabelProps={{ shrink: isDataFetched }}
                     fullWidth
                     multiline
-                    disabled={!isEditable}
-                    InputProps={{
-                      readOnly: !isEditable,
-                    }}
                   />
                   <RHFTextField
                     name="sports"
@@ -176,10 +147,6 @@ export default function Hobbies() {
                     InputLabelProps={{ shrink: isDataFetched }}
                     fullWidth
                     multiline
-                    disabled={!isEditable}
-                    InputProps={{
-                      readOnly: !isEditable,
-                    }}
                   />
                   <RHFTextField
                     name="others"
@@ -187,10 +154,6 @@ export default function Hobbies() {
                     InputLabelProps={{ shrink: isDataFetched }}
                     fullWidth
                     multiline
-                    disabled={!isEditable}
-                    InputProps={{
-                      readOnly: !isEditable,
-                    }}
                   />
                 </Stack>
               </Box>
@@ -201,10 +164,6 @@ export default function Hobbies() {
                 InputLabelProps={{ shrink: isDataFetched }}
                 fullWidth
                 multiline
-                disabled={!isEditable}
-                InputProps={{
-                  readOnly: !isEditable,
-                }}
               />
 
               <RHFTextField
@@ -213,10 +172,6 @@ export default function Hobbies() {
                 InputLabelProps={{ shrink: isDataFetched }}
                 fullWidth
                 multiline
-                disabled={!isEditable}
-                InputProps={{
-                  readOnly: !isEditable,
-                }}
               />
 
               <Box>
@@ -230,10 +185,6 @@ export default function Hobbies() {
                     InputLabelProps={{ shrink: isDataFetched }}
                     fullWidth
                     multiline
-                    disabled={!isEditable}
-                    InputProps={{
-                      readOnly: !isEditable,
-                    }}
                   />
                   <RHFTextField
                     label="Reason"
@@ -241,10 +192,6 @@ export default function Hobbies() {
                     InputLabelProps={{ shrink: isDataFetched }}
                     fullWidth
                     multiline
-                    disabled={!isEditable}
-                    InputProps={{
-                      readOnly: !isEditable,
-                    }}
                   />
                 </Stack>
               </Box>
@@ -255,28 +202,22 @@ export default function Hobbies() {
                 InputLabelProps={{ shrink: isDataFetched }}
                 fullWidth
                 multiline
-                disabled={!isEditable}
-                InputProps={{
-                  readOnly: !isEditable,
-                }}
               />
 
               <Stack spacing={3} alignItems="flex-end" sx={{ mt: 3 }}>
                 <Box display="flex" gap={1}>
-                  {import.meta.env.MODE === "development" && isEditable && (
+                  {import.meta.env.MODE === "development" && (
                     <LoadingButton variant="outlined" onClick={handleReset}>
                       Reset
                     </LoadingButton>
                   )}
-                  {isEditable && (
-                    <LoadingButton
-                      type="submit"
-                      variant="contained"
-                      loading={isSubmitting}
-                    >
-                      Save
-                    </LoadingButton>
-                  )}
+                  <LoadingButton
+                    type="submit"
+                    variant="contained"
+                    loading={isSubmitting}
+                  >
+                    Save
+                  </LoadingButton>
                 </Box>
               </Stack>
             </Stack>
