@@ -31,6 +31,7 @@
     "cloudinary-react": "^1.8.1",
     "date-fns": "^2.29.3",
     "dayjs": "^1.11.7",
+    "exceljs": "^4.4.0",
     "framer-motion": "6.2.8",
     "fullcalendar": "^6.1.4",
     "idb": "^8.0.3",
@@ -50,7 +51,6 @@
     "simplebar-react": "^3.2.3",
     "socket.io-client": "^4.5.4",
     "timeago.js": "^4.0.2",
-    "xlsx": "^0.18.5",
     "yup": "0.32.11"
   },
   "devDependencies": {

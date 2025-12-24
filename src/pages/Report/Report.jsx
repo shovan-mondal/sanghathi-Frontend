@@ -1,5 +1,5 @@
 import { useState, useEffect, React } from "react";
-//import * as XLSX from 'xlsx';
+import ExcelJS from 'exceljs';
 
 import {
   Avatar,
@@ -270,43 +270,49 @@ const Report = () => {
     return '#9e9e9e';
   };
 
-  const handleExportToExcel = () => {
+  const handleExportToExcel = async () => {
     try {
-      // Prepare the data for Excel
-      const excelData = filteredThreads.map(thread => ({
-        'Title': thread.title || 'N/A',
-        'Summary': thread.description || 'N/A',
-        'Status': thread.status || 'N/A',
-        'Category': thread.topic || 'Uncategorized',
-        'Opened Date': thread.createdAt ? new Date(thread.createdAt).toLocaleDateString() : 'N/A',
-        'Closed Date': thread.closedAt ? new Date(thread.closedAt).toLocaleDateString() : 'N/A',
-        'Author': thread.author?.name || 'N/A',
-        'Members': thread.participants?.map(p => p.name).join(', ') || 'N/A'
-      }));
+      // Create a new workbook and worksheet
+      const workbook = new ExcelJS.Workbook();
+      const worksheet = workbook.addWorksheet('Threads Report');
 
-      // Create a worksheet
-      const worksheet = XLSX.utils.json_to_sheet(excelData);
-
-      // Set column widths
-      const columnWidths = [
-        { wch: 30 }, // Title
-        { wch: 50 }, // Description
-        { wch: 15 }, // Status
-        { wch: 20 }, // Category
-        { wch: 20 }, // Opened Date
-        { wch: 20 }, // Closed Date
-        { wch: 20 }, // Author
-        { wch: 40 }  // Members
+      // Define columns with headers and widths
+      worksheet.columns = [
+        { header: 'Title', key: 'title', width: 30 },
+        { header: 'Summary', key: 'summary', width: 50 },
+        { header: 'Status', key: 'status', width: 15 },
+        { header: 'Category', key: 'category', width: 20 },
+        { header: 'Opened Date', key: 'openedDate', width: 20 },
+        { header: 'Closed Date', key: 'closedDate', width: 20 },
+        { header: 'Author', key: 'author', width: 20 },
+        { header: 'Members', key: 'members', width: 40 }
       ];
-      worksheet['!cols'] = columnWidths;
 
-      // Create a workbook
-      const workbook = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(workbook, worksheet, 'Threads Report');
+      // Add data rows
+      filteredThreads.forEach(thread => {
+        worksheet.addRow({
+          title: thread.title || 'N/A',
+          summary: thread.description || 'N/A',
+          status: thread.status || 'N/A',
+          category: thread.topic || 'Uncategorized',
+          openedDate: thread.createdAt ? new Date(thread.createdAt).toLocaleDateString() : 'N/A',
+          closedDate: thread.closedAt ? new Date(thread.closedAt).toLocaleDateString() : 'N/A',
+          author: thread.author?.name || 'N/A',
+          members: thread.participants?.map(p => p.name).join(', ') || 'N/A'
+        });
+      });
+
+      // Style the header row
+      worksheet.getRow(1).font = { bold: true };
+      worksheet.getRow(1).fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FFE0E0E0' }
+      };
 
       // Generate Excel file
-      const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
-      const data = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      const buffer = await workbook.xlsx.writeBuffer();
+      const data = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
 
       // Create download link
       const url = window.URL.createObjectURL(data);
