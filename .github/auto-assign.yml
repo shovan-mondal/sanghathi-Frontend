@@ -10,10 +10,9 @@ numberOfReviewers: 1
 
 # Reviewers pool - Replace with actual GitHub usernames
 reviewers:
-  - # Add your team member usernames here
-  # Example: 
-  # - username1
-  # - username2
+  - Kulsum06
+  - Sai-Emani25
+  - advitha24
 
 # Skip these keywords in PR title to avoid assignment
 skipKeywords:
