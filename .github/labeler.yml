@@ -1,0 +1,46 @@
+# Auto-labeling configuration
+# Label PRs based on changed files
+
+# Components
+components:
+  - changed-files:
+    - any-glob-to-any-file: 'src/components/**/*'
+
+pages:
+  - changed-files:
+    - any-glob-to-any-file: 'src/pages/**/*'
+
+# Styling
+styling:
+  - changed-files:
+    - any-glob-to-any-file: ['**/*.css', 'src/theme/**/*']
+
+# Configuration
+config:
+  - changed-files:
+    - any-glob-to-any-file: ['*.config.js', '*.config.ts', '.github/**/*']
+
+# Tests
+tests:
+  - changed-files:
+    - any-glob-to-any-file: ['**/*.test.js', '**/*.test.jsx', '**/*.spec.js']
+
+# Documentation
+documentation:
+  - changed-files:
+    - any-glob-to-any-file: ['**/*.md', 'docs/**/*']
+
+# CI/CD
+ci-cd:
+  - changed-files:
+    - any-glob-to-any-file: ['.github/**/*', '*.yml']
+
+# Dependencies
+dependencies:
+  - changed-files:
+    - any-glob-to-any-file: ['package.json', 'package-lock.json']
+
+# Backend integration
+backend:
+  - changed-files:
+    - any-glob-to-any-file: ['src/apiCalls.js', 'src/services/**/*']
