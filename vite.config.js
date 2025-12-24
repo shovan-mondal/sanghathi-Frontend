@@ -40,6 +40,17 @@ export default defineConfig(({ mode }) => {
         "X-XSS-Protection": "1; mode=block",
         "Referrer-Policy": "strict-origin-when-cross-origin"
       }
+    },
+    test: {
+      environment: "jsdom",
+      setupFiles: "./src/setupTests.js",
+      passWithNoTests: true,
+      reporters: "default",
+      coverage: {
+        provider: "v8",
+        reportsDirectory: "./coverage",
+        reporter: ["text", "lcov"],
+      },
     }
   };
 });
